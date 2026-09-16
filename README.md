@@ -1,153 +1,151 @@
-# 📈 Order Book & Financial Settlement Engine
+# Meli Order Book
 
-Módulo central de Livro de Ofertas e Liquidação Financeira (Settlement) focado em **alta consistência, idempotência e auditoria contábil**. O sistema gerencia o ciclo de vida completo de ordens de compra e venda do para **Vibranium**, garantindo a conservação de ativos e consistência em ambiente PostgreSQL real.
+API para negociacao de Vibranium contra BRL. O desafio implementa submissao de
+ordens BUY/SELL, reservas de saldo, matching por preco-tempo, liquidacao
+atomica e historico auditavel em PostgreSQL.
 
----
+## Avaliacao Rapida
 
-## 📐 Diagrama de Sequência
+Pre-requisitos: Docker com Docker Compose. Para executar os testes, tambem e
+necessario o .NET SDK 10.
 
-O diagrama abaixo descreve a interação ponta a ponta quando uma ordem é recebida pela API, passa pela reserva na **Wallet**, é processada pelo **Matching Engine** e tem seus efeitos registrados de forma atômica no **Ledger**:
+```bash
+make down-clean
+make up-d
+until curl --fail --silent http://localhost:8080/api/v1/ready >/dev/null; do sleep 1; done
+curl -i http://localhost:8080/api/v1/ready
+```
+
+Quando a resposta for `200 OK`, os principais pontos de avaliacao estao
+disponiveis:
+
+| Recurso | Endereco |
+|---|---|
+| API e OpenAPI interativo | http://localhost:8080/swagger/index.html |
+| Documento OpenAPI | http://localhost:8080/openapi/v1.json |
+| Dashboard de negocio | http://localhost:3000/d/orderbook-business |
+| Prometheus | http://localhost:9090 |
+
+Para parar e limpar o ambiente local:
+
+```bash
+make down-clean
+```
+
+## Demonstracao
+
+Os usuarios seedados permitem executar este fluxo imediatamente:
+
+| Papel | userId |
+|---|---|
+| Comprador | `00000000-0000-0000-0000-000000000001` |
+| Vendedor | `00000000-0000-0000-0000-000000000002` |
+
+Envie primeiro uma compra e depois uma venda compativel. Os valores de BRL sao
+sempre enviados em centavos.
+
+```bash
+curl -i -X POST http://localhost:8080/api/v1/orders \
+  -H 'Content-Type: application/json' \
+  --data '{"userId":"00000000-0000-0000-0000-000000000001","side":"BUY","priceBrlCents":150000,"quantity":1}'
+
+curl -i -X POST http://localhost:8080/api/v1/orders \
+  -H 'Content-Type: application/json' \
+  --data '{"userId":"00000000-0000-0000-0000-000000000002","side":"SELL","priceBrlCents":150000,"quantity":1}'
+```
+
+As duas chamadas retornam `201 Created`. A primeira ordem fica `OPEN`; a
+segunda a executa, retorna `FILLED` e cria um trade. Consulte o resultado:
+
+```bash
+curl -s http://localhost:8080/api/v1/order-book
+curl -s 'http://localhost:8080/api/v1/trades?limit=50'
+```
+
+O fluxo completo, com saldos esperados, esta em
+[`docs/guia-uso-api.md`](docs/guia-uso-api.md). A collection Postman esta em
+[`docs/postman/orderbook-collection.json`](docs/postman/orderbook-collection.json).
+
+## Fluxo de Uma Ordem
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Client as Cliente / API Consumer
-    participant API as Order API Gateway
-    participant Wallet as Wallet & Reservation Service
-    participant Engine as Matching Engine (FIFO)
-    participant Ledger as Ledger & Settlement
-    participant DB as PostgreSQL DB
+    participant C as Cliente
+    participant API as API
+    participant W as Single Writer
+    participant M as Matching
+    participant DB as PostgreSQL
 
-    Client->>API: POST /orders (Payload)
-
-    rect rgb(240, 240, 250)
-        note over API, DB: Validação e chave interna por submissão
-        API->>API: Gerar UUID interno
-    end
-
-    rect rgb(250, 240, 240)
-        note over API, Wallet: Checagem e Reserva de Saldo
-        API->>Wallet: Solicita reserva de ativo
-        Wallet->>DB: Valida saldo e bloqueia ativo
-        alt Saldo insuficiente
-            Wallet-->>API: Saldo Insuficiente
-            API->>DB: Persiste Order com status REJECTED
-            API-->>Client: 409 Conflict (Sem mutação em Reservation/Trade/Ledger)
-        else Saldo suficiente
-            Wallet-->>DB: Grava Reserva de Saldo
-            Wallet-->>API: Saldo Reservado com Sucesso
-        end
-    end
-
-    rect rgb(240, 250, 240)
-        note over API, Engine: Matching & Execution
-        API->>Engine: Processa ordem (Taker vs Resting Makers)
-
-        alt Nenhuma ordem compatível no Livro
-            Engine->>DB: Insere Ordem como Maker (Resting Order)
-            Engine-->>API: Status 201 Created (Ordem no Livro)
-        else Match encontrado (Prioridade FIFO / Preço Maker)
-            Engine->>Engine: Calcula Fills (Totais ou Parciais)
-            Engine->>Ledger: Envia Trades para Liquidação
-
-            loop Para cada Fill / Trade gerado
-                Ledger->>DB: Grava Trade
-                Ledger->>DB: Grava exatamente 4 entradas de Ledger (Partidas Dobradas)
-                Ledger->>DB: Atualiza saldos definitivos e liquida reservas
-            end
-
-            Engine-->>API: Execução concluída (FILLED ou PARTIALLY_FILLED)
-        end
-    end
-
-    API-->>Client: Resposta HTTP 201 Created (com OrderId e Trades)
+    C->>API: POST /api/v1/orders
+    API->>W: Admite no Channel
+    W->>DB: Reserva saldo e inicia transacao
+    W->>M: Executa matching preco-tempo
+    M->>DB: Persiste ordem, trade e 4 lancamentos
+    DB-->>W: Commit
+    W-->>API: Resultado da ordem
+    API-->>C: 201 Created
 ```
 
----
+O fluxo detalhado, incluindo rejeicao, recovery e shutdown, esta em
+[`docs/diagrams/order-flow.md`](docs/diagrams/order-flow.md).
 
-## 🎯 Visão Geral do Sistema
+## Regras de Negocio
 
-A API implementa a execução e liquidação de ordens financeiras com garantia de consistência estrita através dos seguintes pilares:
+- BUY reserva `quantidade x preco` em BRL; SELL reserva a quantidade de
+  Vibranium.
+- O matching usa prioridade de preco e, em empate, ordem de aceite (FIFO).
+- Um trade sempre ocorre no preco da maker, suporta fills parciais e multiplos
+  fills.
+- Cada trade gera quatro lancamentos de ledger: debito/credito de BRL e
+  debito/credito de Vibranium.
+- A ordem e persistida como `REJECTED` quando nao ha saldo suficiente, sem
+  criar reserva, trade ou ledger parcial.
+- Cada `POST /api/v1/orders` e uma nova submissao. A API gera a chave interna
+  necessaria para persistir o resultado; nao envie `Idempotency-Key`.
 
-* **Reserva Preventiva de Saldo:** Bloqueio e liberação imediata de ativos (BRL para compras, Vibranium para vendas) para evitar *double spending*.
-* **Motor de Matching Determinístico:** Casamento de ofertas priorizando **Preço/Tempo (FIFO)** e garantindo o preço do *Maker*.
-* **Contabilidade de Partidas Dobradas (Ledger):** Liquidação auditável onde cada *Trade* gera exatamente 4 lançamentos contábeis.
-* **Garantia de Idempotência:** Chaves únicas por operação que previnem duplicação de ordens ou alterações inconsistentes de payload.
+## Arquitetura
 
----
+O projeto e um Modular Monolith em .NET 10, organizado em Vertical Slices com
+Ports & Adapters. Um Single Writer serializa mutations do livro; PostgreSQL e a
+fonte de verdade para ordens, reservas, trades e ledger. O livro em memoria e
+publicado somente apos o commit da transacao e reconstruido no startup.
 
-## ⚙️ Regras de Negócio e Fluxos Operacionais
+O diagrama detalhado esta em
+[`docs/diagrams/order-flow.md`](docs/diagrams/order-flow.md). As decisoes e
+invariantes normativas estao em [`docs/002-arquitetura.md`](docs/002-arquitetura.md)
+e [`docs/004-sdd.md`](docs/004-sdd.md).
 
-### 1. Gestão de Carteira e Reservas (`BDD-01`, `BDD-02`, `BDD-03`)
-Antes de entrar no livro de ofertas, o saldo do usuário é validado e reservado no banco de dados.
+## Evidencias de Qualidade
 
-* **Ordem BUY:** Reserva o limite total em **BRL** (`preço * quantidade`).
-* **Ordem SELL:** Reserva o montante em **Vibranium**.
-* **Saldo Insuficiente:** A ordem é rejeitada com status HTTP `409 Conflict`, gravada com status `REJECTED`, e nenhuma alteração (*Reservation*, *Trade* ou *Ledger*) é criada.
-
----
-
-### 2. Submissões de Ordem
-Cada `POST /api/v1/orders` é uma nova submissão. A API gera uma chave interna para persistir o resultado e não recebe `Idempotency-Key` do cliente.
-
----
-
-### 3. Motor de Matching e Livro de Ofertas (`BDD-06` a `BDD-10`)
-O motor processa ordens *Taker* contra ordens *Maker* que estão na pedra (*resting*).
-
-* **Preço do Executante (Price Priority):** O valor da transação é fixado sempre no preço do **Maker** (ordem que já estava no livro).
-* **Prioridade Temporal (FIFO):** Ordens *Maker* no mesmo patamar de preço são consumidas em ordem cronológica de chegada.
-* **Execução Parcial (Partial Fills):** Se a ordem *Taker* for maior que a *Maker*, ela assume o status `PARTIALLY_FILLED`, mantendo o saldo restante (`remaining`) no livro para novos casamentos.
-* **Self-Trade:** A API aceita cruzamento de ordens do mesmo usuário (*BUY* vs *SELL* própria), processando e liquidando com lançamento de livro normal.
-
----
-
-### 4. Liquidação e Conservação de Ativos (`BDD-09`, `BDD-11`)
-O processo de liquidação (*settlement*) garante que nenhum centavo de BRL ou fração de Vibranium seja criado ou destruído sem rastreamento contábil.
-
-#### Regra dos 4 Registros de Ledger
-Cada transação (*Trade*) confirmada gera **exatamente 4 entradas no Ledger** em uma única transação atômica:
-
-1. **Débito BRL** da carteira do Comprador (liberando o saldo reservado).
-2. **Crédito BRL** na carteira do Vendedor.
-3. **Débito Vibranium** da carteira do Vendedor (liberando o ativo reservado).
-4. **Crédito Vibranium** na carteira do Comprador.
-
-> **Princípio de Conservação:** A soma de todo o BRL e todo o Vibranium no sistema permanece constante antes e depois da liquidação de cada Trade.
-
----
-
-## 📋 Mapeamento de Testes e Cobertura BDD
-
-| ID | Cenário | Comportamento Esperado | Status HTTP |
-| :--- | :--- | :--- | :--- |
-| **BDD-01** | Reservar BRL (BUY) | Bloqueia saldo em BRL na carteira do comprador | `201 Created` |
-| **BDD-02** | Reservar Vibranium (SELL) | Bloqueia saldo em Vibranium na carteira do vendedor | `201 Created` |
-| **BDD-03** | Saldo insuficiente | Transação abortada; Ordem persistida como `REJECTED` | `409 Conflict` |
-| **BDD-06** | Preço do Maker | Transação é fechada com o valor estipulado pelo Maker | `201/200 OK` |
-| **BDD-07** | Fila FIFO | Consome primeiramente a ordem Maker mais antiga | `201/200 OK` |
-| **BDD-08** | Execução parcial | Ordem Taker fica como `PARTIALLY_FILLED` com `remaining > 0` | `201/200 OK` |
-| **BDD-09** | Múltiplos Fills | Cria 1 Trade e 4 registros de Ledger por Maker consumido | `201/200 OK` |
-| **BDD-10** | Self-Trade | Aceita e liquida ordem cruzada do próprio usuário | `201/200 OK` |
-| **BDD-11** | Conservação e Settlement | Conservação total dos saldos e liquidação atômica | `200 OK` |
-
----
-
-## 🛠️ Especificação do Payload de Entrada
-
-### Criar uma Ordem (`POST /orders`)
-
-**Header:**
-```http
-Content-Type: application/json
+```bash
+make test
 ```
 
-**Body:**
-```json
-{
-  "userId": "usr_998231",
-  "side": "BUY",
-  "priceBrlCents": 150000,
-  "quantity": 10
-}
-```
+Atualmente, a solucao possui 38 testes distribuidos entre arquitetura, unidade,
+integracao e fluxos funcionais contra PostgreSQL real via Testcontainers. O
+guia [`docs/guia-testes.md`](docs/guia-testes.md) descreve a finalidade de cada
+suite e os cenarios cobertos.
+
+Os scripts K6 e seu protocolo estao em [`docs/benchmark.md`](docs/benchmark.md).
+Os resultados sao gravados em `benchmarks/results/`; os numeros de throughput
+sao resultados de benchmark, nao capacidades declaradas por configuracao.
+
+## Observabilidade
+
+O ambiente local sobe Prometheus, Grafana, Loki, Tempo e Alloy junto da API.
+O dashboard de negocio apresenta compras recebidas, vendas recebidas, consultas
+de ordem e negocios executados. O dashboard atualiza a cada 10 segundos.
+
+Detalhes de metricas, traces e dashboards estao em
+[`deploy/observability/README.md`](deploy/observability/README.md).
+
+## Limites do MVP
+
+Ficam fora do escopo: autenticacao, cancelamento de ordens, market orders,
+taxas, multiplos ativos, interface grafica e escala horizontal.
+
+## Desenvolvimento Assistido por IA
+
+O projeto foi desenvolvido com apoio do OpenCode. A pasta `.opencode/` reune a
+configuracao do desenvolvimento assistido, e `AGENTS.md` define as regras de
+qualidade e governanca aplicadas ao repositorio.
