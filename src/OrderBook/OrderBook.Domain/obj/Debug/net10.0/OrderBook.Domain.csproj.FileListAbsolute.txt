@@ -1,0 +1,11 @@
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/bin/Debug/net10.0/OrderBook.Domain.deps.json
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/bin/Debug/net10.0/OrderBook.Domain.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/bin/Debug/net10.0/OrderBook.Domain.pdb
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.AssemblyInfoInputs.cache
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.AssemblyInfo.cs
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.csproj.CoreCompileInputs.cache
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/refint/OrderBook.Domain.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.pdb
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/ref/OrderBook.Domain.dll

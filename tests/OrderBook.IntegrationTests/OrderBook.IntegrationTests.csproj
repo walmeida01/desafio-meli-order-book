@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>OrderBook.IntegrationTests</RootNamespace>
+    <!-- Testcontainers currently brings SSH.NET transitively; keep the audit visible without blocking restore. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/OrderBook/OrderBook.Api/OrderBook.Api.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" /><PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" /><PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" /><PackageReference Include="Testcontainers.PostgreSql" /><PackageReference Include="Npgsql" />
+  </ItemGroup>
+</Project>

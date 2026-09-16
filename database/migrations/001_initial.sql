@@ -1,0 +1,20 @@
+CREATE SEQUENCE IF NOT EXISTS accepted_order_sequence;
+CREATE TABLE IF NOT EXISTS wallets (
+ id uuid PRIMARY KEY, user_id uuid NOT NULL UNIQUE, brl_available bigint NOT NULL CHECK (brl_available >= 0), brl_locked bigint NOT NULL CHECK (brl_locked >= 0),
+ vibranium_available bigint NOT NULL CHECK (vibranium_available >= 0), vibranium_locked bigint NOT NULL CHECK (vibranium_locked >= 0), version bigint NOT NULL DEFAULT 0,
+ created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS orders (
+  id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES wallets(user_id), instrument text NOT NULL CHECK (instrument = 'VIBRANIUM'), side text NOT NULL CHECK (side IN ('BUY','SELL')), limit_price_brl_cents bigint NOT NULL CHECK (limit_price_brl_cents > 0),
+ original_quantity bigint NOT NULL CHECK (original_quantity BETWEEN 1 AND 1000000000), remaining_quantity bigint NOT NULL CHECK (remaining_quantity BETWEEN 0 AND original_quantity), status text NOT NULL CHECK (status IN ('OPEN','PARTIALLY_FILLED','FILLED','REJECTED')),
+ accepted_sequence bigint UNIQUE, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
+ CHECK ((status = 'REJECTED' AND accepted_sequence IS NULL) OR (status <> 'REJECTED' AND accepted_sequence IS NOT NULL)));
+CREATE INDEX IF NOT EXISTS ix_orders_book ON orders(status, side, limit_price_brl_cents, accepted_sequence);
+CREATE TABLE IF NOT EXISTS reservations (
+   id uuid PRIMARY KEY, order_id uuid NOT NULL UNIQUE REFERENCES orders(id), user_id uuid NOT NULL REFERENCES wallets(user_id), side text NOT NULL CHECK (side IN ('BUY','SELL')), asset text NOT NULL CHECK (asset IN ('BRL','VIBRANIUM')), original_amount bigint NOT NULL CHECK (original_amount > 0), remaining_amount bigint NOT NULL CHECK (remaining_amount BETWEEN 0 AND original_amount), status text NOT NULL CHECK (status IN ('ACTIVE','RELEASED')), created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), CHECK ((side = 'BUY' AND asset = 'BRL') OR (side = 'SELL' AND asset = 'VIBRANIUM')), CHECK ((status = 'ACTIVE' AND remaining_amount > 0) OR (status = 'RELEASED' AND remaining_amount = 0)));
+CREATE TABLE IF NOT EXISTS trades (
+   id uuid PRIMARY KEY, taker_order_id uuid NOT NULL REFERENCES orders(id), maker_order_id uuid NOT NULL REFERENCES orders(id), buyer_user_id uuid NOT NULL REFERENCES wallets(user_id), seller_user_id uuid NOT NULL REFERENCES wallets(user_id), quantity bigint NOT NULL CHECK (quantity > 0), price_brl_cents bigint NOT NULL CHECK (price_brl_cents > 0), accepted_sequence bigint NOT NULL CHECK (accepted_sequence > 0), fill_ordinal integer NOT NULL CHECK (fill_ordinal > 0), created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(taker_order_id, fill_ordinal), UNIQUE(taker_order_id, maker_order_id, fill_ordinal));
+CREATE INDEX IF NOT EXISTS ix_trades_history ON trades(accepted_sequence, fill_ordinal, id);
+CREATE TABLE IF NOT EXISTS ledger_entries (
+ id uuid PRIMARY KEY, trade_id uuid NOT NULL REFERENCES trades(id), effect_type text NOT NULL CHECK (effect_type IN ('BUYER_BRL_DEBIT','BUYER_VIBRANIUM_CREDIT','SELLER_VIBRANIUM_DEBIT','SELLER_BRL_CREDIT')), user_id uuid NOT NULL, asset text NOT NULL CHECK (asset IN ('BRL','VIBRANIUM')), direction text NOT NULL CHECK (direction IN ('DEBIT','CREDIT')), amount bigint NOT NULL CHECK (amount > 0), created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(trade_id,effect_type));
+CREATE TABLE IF NOT EXISTS idempotency_records (
+  user_id uuid NOT NULL, idempotency_key text NOT NULL CHECK (octet_length(idempotency_key) BETWEEN 1 AND 128), canonical_payload_hash bytea NOT NULL CHECK (octet_length(canonical_payload_hash) = 32), order_id uuid NOT NULL REFERENCES orders(id), response_status integer NOT NULL CHECK (response_status BETWEEN 200 AND 599), response_body jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(user_id,idempotency_key));

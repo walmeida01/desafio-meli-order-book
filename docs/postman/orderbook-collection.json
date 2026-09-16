@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "Meli Order Book V1",
+    "description": "Collection for the versioned Order Book API and Prometheus metrics endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "userIdBuy", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "userIdSell", "value": "00000000-0000-0000-0000-000000000002" },
+    { "key": "orderId", "value": "" },
+    { "key": "buyKey", "value": "demo-buy-001" },
+    { "key": "sellKey", "value": "demo-sell-001" },
+    { "key": "cursor", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/health" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Readiness",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/ready" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 503 while starting', function () { pm.expect([200, 503]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 - Orders",
+      "item": [
+        {
+          "name": "Create BUY",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1000,\n  \"quantity\": 10\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 201 or 200 replay', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+            "const body = pm.response.json();",
+            "if (body.orderId) pm.collectionVariables.set('orderId', body.orderId);",
+            "pm.test('Response has orderId', function () { pm.expect(body.orderId).to.be.a('string'); });"
+          ] } }]
+        },
+        {
+          "name": "Replay BUY",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1000,\n  \"quantity\": 10\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Replay returns 200', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Idempotency conflict",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1001,\n  \"quantity\": 10\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Conflict returns 409', function () { pm.response.to.have.status(409); });"] } }]
+        },
+        {
+          "name": "Create SELL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{sellKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdSell}}\",\n  \"side\": \"SELL\",\n  \"priceBrlCents\": 900,\n  \"quantity\": 10\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 201 or 200 replay', function () { pm.expect([200, 201]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Invalid order payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "invalid-payload-{{$timestamp}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"not-a-guid\",\n  \"side\": \"INVALID\",\n  \"priceBrlCents\": 0,\n  \"quantity\": 0\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid payload returns 400', function () { pm.response.to.have.status(400); });"] } }]
+        },
+        {
+          "name": "Get order by ID",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/orders/{{orderId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 - Queries",
+      "item": [
+        {
+          "name": "BUY wallet",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdBuy}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "SELL wallet",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdSell}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Order book",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/order-book" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 503', function () { pm.expect([200, 503]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Trades first page",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?limit=100" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 200 or 503', function () { pm.expect([200, 503]).to.include(pm.response.code); });",
+            "if (pm.response.code === 200) { const body = pm.response.json(); if (body.nextCursor) pm.collectionVariables.set('cursor', body.nextCursor); }"
+          ] } }]
+        },
+        {
+          "name": "Trades next page",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?cursor={{cursor}}&limit=1" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200, 400 or 503', function () { pm.expect([200, 400, 503]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Invalid cursor",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?cursor=not-a-base64-cursor&limit=1" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid cursor returns 400 or 503', function () { pm.expect([400, 503]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Invalid limit",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?limit=0" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid limit returns 400 or 503', function () { pm.expect([400, 503]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "04 - Observability",
+      "item": [
+        {
+          "name": "Prometheus metrics",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/metrics" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Metrics endpoint returns 200', function () { pm.response.to.have.status(200); });",
+            "const body = pm.response.text();",
+            "['orders_received_total', 'orderbook_queue_depth', 'orderbook_queue_rejected_total', 'orders_processed_total', 'trades_executed_total', 'matching_duration_seconds', 'database_batch_flush_duration_seconds', 'database_batch_size'].forEach(function (metric) { pm.test(metric + ' is exposed', function () { pm.expect(body).to.include(metric); }); });"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

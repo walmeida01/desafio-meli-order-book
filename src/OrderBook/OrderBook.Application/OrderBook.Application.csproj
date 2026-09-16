@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><RootNamespace>OrderBook.Application</RootNamespace></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OrderBook.Domain/OrderBook.Domain.csproj" />
+    <ProjectReference Include="../OrderBook.Contracts/OrderBook.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><RootNamespace>OrderBook.Api</RootNamespace><InvariantGlobalization>true</InvariantGlobalization></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OrderBook.Application/OrderBook.Application.csproj" />
+    <ProjectReference Include="../OrderBook.Contracts/OrderBook.Contracts.csproj" />
+    <ProjectReference Include="../OrderBook.Infrastructure/OrderBook.Infrastructure.csproj" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+  </ItemGroup>
+</Project>

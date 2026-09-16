@@ -1,0 +1,17 @@
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Application.deps.json
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Application.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Application.pdb
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Domain.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Domain.pdb
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.csproj.AssemblyReference.cache
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.GeneratedMSBuildEditorConfig.editorconfig
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.AssemblyInfoInputs.cache
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.AssemblyInfo.cs
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.csproj.CoreCompileInputs.cache
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBoo.D15C5266.Up2Date
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/refint/OrderBook.Application.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/OrderBook.Application.pdb
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/obj/Debug/net10.0/ref/OrderBook.Application.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Contracts.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Application/bin/Debug/net10.0/OrderBook.Contracts.pdb

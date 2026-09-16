@@ -1,0 +1,7 @@
+{
+  "OrderBook.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/will\/projects\/meli-desafio-order-book\/src\/OrderBook\/OrderBook.Api",
+  "OrderBook.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/will\/projects\/meli-desafio-order-book\/src\/OrderBook\/OrderBook.Application",
+  "OrderBook.Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/will\/projects\/meli-desafio-order-book\/src\/OrderBook\/OrderBook.Contracts",
+  "OrderBook.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/will\/projects\/meli-desafio-order-book\/src\/OrderBook\/OrderBook.Domain",
+  "OrderBook.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/will\/projects\/meli-desafio-order-book\/src\/OrderBook\/OrderBook.Infrastructure"
+}

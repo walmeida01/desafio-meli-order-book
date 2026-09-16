@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:8080
+@userIdBuy = 00000000-0000-0000-0000-000000000001
+@userIdSell = 00000000-0000-0000-0000-000000000002
+@orderId = 00000000-0000-0000-0000-000000000000
+@buyIdempotencyKey = demo-buy-001
+@sellIdempotencyKey = demo-sell-001
+@cursor = MXwxfDAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMQ==
+
+### Liveness: esperado 200 se o processo estiver vivo.
+GET {{baseUrl}}/api/v1/health
+
+### Readiness: esperado 200 somente após PostgreSQL, ownership e recovery; caso contrário 503.
+GET {{baseUrl}}/api/v1/ready
+
+### BUY: usuário 1 possui BRL no seed; em ambiente ready, esperado 201 se a ordem for aceita.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: {{buyIdempotencyKey}}
+
+{
+  "userId": "{{userIdBuy}}",
+  "side": "BUY",
+  "priceBrlCents": 1000,
+  "quantity": 10
+}
+
+### Replay idempotente do BUY: mesmo usuário, chave e payload; esperado 200 sem nova ordem.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: {{buyIdempotencyKey}}
+
+{
+  "userId": "{{userIdBuy}}",
+  "side": "BUY",
+  "priceBrlCents": 1000,
+  "quantity": 10
+}
+
+### Conflito de idempotência: mesma chave do BUY com payload diferente; esperado 409.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: {{buyIdempotencyKey}}
+
+{
+  "userId": "{{userIdBuy}}",
+  "side": "BUY",
+  "priceBrlCents": 1001,
+  "quantity": 10
+}
+
+### SELL: usuário 2 possui Vibranium no seed; cruza o BUY quando processado depois; esperado 201 se ready.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: {{sellIdempotencyKey}}
+
+{
+  "userId": "{{userIdSell}}",
+  "side": "SELL",
+  "priceBrlCents": 900,
+  "quantity": 10
+}
+
+### Ordem por ID: substitua @orderId pelo orderId retornado por uma criação/replay acima; esperado 200 quando existir.
+GET {{baseUrl}}/api/v1/orders/{{orderId}}
+
+### Wallet do usuário BUY: leitura committed; esperado 200 quando a API estiver ready.
+GET {{baseUrl}}/api/v1/wallets/{{userIdBuy}}
+
+### Wallet do usuário SELL: leitura committed; esperado 200 quando a API estiver ready.
+GET {{baseUrl}}/api/v1/wallets/{{userIdSell}}
+
+### Snapshot do livro: esperado 200; pode estar vazio após o cruzamento completo.
+GET {{baseUrl}}/api/v1/order-book
+
+### Trades na primeira página: limit válido (1..100); esperado 200 quando ready.
+GET {{baseUrl}}/api/v1/trades?limit=1
+
+### Trades com cursor estruturalmente válido; para paginação real, substitua @cursor por NextCursor da resposta anterior.
+GET {{baseUrl}}/api/v1/trades?cursor={{cursor}}&limit=1
+
+### Cursor inválido: esperado 400 com INVALID_CURSOR.
+GET {{baseUrl}}/api/v1/trades?cursor=not-a-base64-cursor&limit=1
+
+### Limit inválido: esperado 400 com INVALID_LIMIT.
+GET {{baseUrl}}/api/v1/trades?limit=0
+
+### Payload inválido: esperado 400 com INVALID_PAYLOAD.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: invalid-payload-001
+
+{
+  "userId": "not-a-guid",
+  "side": "INVALID",
+  "priceBrlCents": 0,
+  "quantity": 0
+}
+
+### Idempotency-Key ausente: esperado 400 com INVALID_IDEMPOTENCY_KEY.
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+
+{
+  "userId": "{{userIdBuy}}",
+  "side": "BUY",
+  "priceBrlCents": 1000,
+  "quantity": 1
+}
+
+### Endpoint Prometheus: métricas customizadas e métricas do runtime.
+GET {{baseUrl}}/metrics
