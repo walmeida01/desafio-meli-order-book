@@ -2,10 +2,11 @@
 
 ## Pré-requisitos
 
-Suba a aplicação e aguarde o PostgreSQL, migrations, advisory lock e recovery:
+Para executar todos os asserts do fluxo guiado, reinicie a base local para os
+saldos seedados e aguarde PostgreSQL, migrations, advisory lock e recovery:
 
 ```bash
-docker compose up --build
+make down-clean && make up-d
 ```
 
 A API ficará disponível em `http://localhost:8080`.
@@ -15,56 +16,46 @@ A API ficará disponível em `http://localhost:8080`.
 1. Abra o Postman.
 2. Selecione **Import**.
 3. Escolha `docs/postman/orderbook-collection.json`.
-4. Abra a collection **Meli Order Book V1**.
+4. Abra a collection **Meli Order Book V1 - Fluxo Simples**.
 5. Confirme a variável `baseUrl`, cujo padrão é `http://localhost:8080`.
 
 ## Executar
 
 Execute as pastas na ordem:
 
-1. `01 - Health`
-2. `02 - Orders`
-3. `03 - Queries`
-4. `04 - Observability`
+1. `00 - Verificar API`
+2. `01 - Compra de Vibranium`
+3. `02 - Venda de Vibranium`
 
-Os scripts da collection atualizam automaticamente:
+Os scripts da collection atualizam automaticamente `orderIdCompra`,
+`orderIdVenda` e `tradeId`, usados para confirmar o processamento, o livro de
+ofertas e o historico de negocios.
 
-- `orderId` após a criação da primeira ordem;
-- `cursor` após a consulta paginada de trades.
-
-As chaves de idempotência e os IDs de usuário estão definidos como variáveis da collection. Para repetir o cenário do zero, altere `buyKey` e `sellKey` ou use valores diferentes.
+Os IDs de usuário estão definidos como variáveis da collection. Cada execução
+cria novas ordens; o fluxo não usa `Idempotency-Key`.
 
 ## Variáveis principais
 
 | Variável | Padrão | Uso |
 |---|---|---|
 | `baseUrl` | `http://localhost:8080` | endereço da API |
-| `userIdBuy` | UUID do seed | usuário da ordem BUY |
-| `userIdSell` | UUID do seed | usuário da ordem SELL |
-| `orderId` | preenchido automaticamente | consulta de ordem |
-| `buyKey` | `demo-buy-001` | idempotência da BUY |
-| `sellKey` | `demo-sell-001` | idempotência da SELL |
-| `cursor` | preenchido automaticamente | paginação de trades |
+| `userIdComprador` | UUID do seed | usuário da ordem BUY |
+| `userIdVendedor` | UUID do seed | usuário da ordem SELL |
+| `orderIdCompra` | preenchido automaticamente | confirmação da ordem BUY |
+| `orderIdVenda` | preenchido automaticamente | confirmação da ordem SELL |
+| `tradeId` | preenchido automaticamente | confirmação no histórico |
 
 ## Resultados esperados
 
-- `/api/v1/health`: `200`.
-- `/api/v1/ready`: `200` quando a aplicação estiver pronta; `503` durante a inicialização.
-- Nova ordem: `201`.
-- Replay idêntico: `200`.
-- Conflito de idempotência: `409`.
-- Payload inválido: `400`.
-- Consultas: `200`, `404` ou `503`, conforme estado e dados existentes.
-- Cursor ou limite inválido: `400` quando a aplicação estiver pronta.
-- `/metrics`: `200` com métricas customizadas e de runtime.
+- `/api/v1/ready`: `200`.
+- Compra criada e aberta: `201`, com BRL bloqueado.
+- Venda compatível executada: `201`, com status `FILLED`.
+- Consulta de carteira e ordem: `200`.
+- Livro de ofertas: mostra a BUY aberta e remove as ordens após o matching.
+- Histórico de negócios: mostra o trade de 1 Vibranium por R$ 1.500,00.
 
-## Observabilidade
-
-O endpoint `/metrics` expõe o formato Prometheus. A stack também utiliza OpenTelemetry para exportar traces e logs via Alloy.
-
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-- Alloy: `http://localhost:12345`
+O passo a passo completo e os valores esperados de cada saldo estao em
+`docs/guia-uso-api.md`.
 
 Se `/api/v1/ready` permanecer em `503`, verifique os logs do serviço `api` e o estado do PostgreSQL:
 

@@ -4,6 +4,8 @@
     <ProjectReference Include="../OrderBook.Application/OrderBook.Application.csproj" />
     <ProjectReference Include="../OrderBook.Contracts/OrderBook.Contracts.csproj" />
     <ProjectReference Include="../OrderBook.Infrastructure/OrderBook.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     <PackageReference Include="OpenTelemetry" />

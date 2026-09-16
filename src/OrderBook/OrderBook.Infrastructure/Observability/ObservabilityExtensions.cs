@@ -12,7 +12,10 @@ public static class ObservabilityExtensions
     {
         var options = ObservabilityOptions.FromEnvironment();
         var resourceBuilder = ResourceBuilder.CreateDefault()
-            .AddService(ObservabilityOptions.ServiceName, options.ServiceVersion, serviceInstanceId: options.ServiceInstanceId)
+            .AddService(
+                serviceName: ObservabilityOptions.ServiceName,
+                serviceVersion: options.ServiceVersion,
+                serviceInstanceId: options.ServiceInstanceId)
             .AddAttributes([new KeyValuePair<string, object>("deployment.environment.name", options.DeploymentEnvironmentName)]);
         services.AddSingleton(options);
         services.AddOpenTelemetry()

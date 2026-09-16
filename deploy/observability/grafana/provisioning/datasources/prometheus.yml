@@ -20,7 +20,15 @@ datasources:
     jsonData:
       tracesToLogsV2:
         datasourceUid: orderbook-loki
-        tags: ["service.name", "trace_id"]
+        spanStartTimeShift: "-5m"
+        spanEndTimeShift: "5m"
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: true
+        query: '{${__tags}} | json | trace_id = `${__trace.traceId}`'
+        tags:
+          - key: service.name
+            value: service_name
       tracesToMetrics:
         datasourceUid: orderbook-prometheus
         tags: [{ key: service.name, value: service }]

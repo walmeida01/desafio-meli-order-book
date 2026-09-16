@@ -17,7 +17,7 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Buy_reserves_brl()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10), "bdd-01");
+        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         steps.LastOrder!.Status.Should().Be("OPEN");
         var wallet = await steps.ReadWalletAsync(Buyer);
@@ -29,7 +29,7 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Sell_reserves_vibranium()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10), "bdd-02");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         var wallet = await steps.ReadWalletAsync(Seller);
         wallet.VibraniumAvailable.Should().Be(99_990);
@@ -40,7 +40,7 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Insufficient_balance_persists_rejected_order_without_effects()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 200_000), "bdd-03");
+        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 200_000));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Conflict);
         steps.LastOrder!.Status.Should().Be("REJECTED");
         steps.LastOrder.AcceptedSequence.Should().BeNull();
@@ -48,38 +48,27 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
         (await steps.ReadCountsAsync()).Should().Be(new DatabaseCounts(1, 0, 0, 0));
     }
 
-    [Fact(DisplayName = "BDD-04 — replay idêntico")]
-    public async Task Identical_replay_returns_same_order_without_duplication()
+    [Fact]
+    public async Task Repeated_orders_are_distinct_submissions()
     {
         var steps = await GivenAsync();
-        var request = new OrderRequest(Buyer, "BUY", 1_000, 10);
-        await steps.WhenSendAsync(request, "bdd-04");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 3));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         var first = steps.LastOrder!;
-        var before = await steps.ReadCountsAsync();
-        await steps.WhenSendAsync(request, "bdd-04");
-        steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.OK);
-        steps.LastOrder!.OrderId.Should().Be(first.OrderId);
-        (await steps.ReadCountsAsync()).Should().Be(before);
-    }
 
-    [Fact(DisplayName = "BDD-05 — chave com payload divergente")]
-    public async Task Divergent_payload_for_same_key_returns_conflict_without_mutation()
-    {
-        var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10), "bdd-05");
-        var before = await steps.ReadCountsAsync();
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_001, 10), "bdd-05");
-        steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        (await steps.ReadCountsAsync()).Should().Be(before);
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 7));
+        steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
+        steps.LastOrder!.OrderId.Should().NotBe(first.OrderId);
+        (await steps.ReadCountsAsync()).Orders.Should().Be(2);
+        (await steps.ReadWalletAsync(Seller)).VibraniumLocked.Should().Be(10);
     }
 
     [Fact(DisplayName = "BDD-06 — maker price")]
     public async Task Compatible_orders_trade_at_maker_price()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10), "bdd-06-maker");
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10), "bdd-06-taker");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10));
+        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         steps.LastOrder!.Trades.Should().ContainSingle().Which.PriceBrlCents.Should().Be(900);
         (await steps.ReadTradesAsync()).Items.Should().ContainSingle().Which.PriceBrlCents.Should().Be(900);
@@ -89,11 +78,11 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Same_price_makers_are_consumed_in_acceptance_order()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5), "bdd-07-first");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5));
         var firstMaker = steps.LastOrder!.OrderId;
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5), "bdd-07-second");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5));
         var secondMaker = steps.LastOrder!.OrderId;
-        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 8), "bdd-07-taker");
+        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 8));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         steps.LastOrder!.Status.Should().Be("FILLED");
         var trades = await steps.ReadTradesAsync();
@@ -108,8 +97,8 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Partial_fill_keeps_remaining_order_open()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5), "bdd-08-maker");
-        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 10), "bdd-08-taker");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 5));
+        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 10));
         steps.LastOrder!.Status.Should().Be("PARTIALLY_FILLED");
         steps.LastOrder.RemainingQuantity.Should().Be(5);
         var book = await steps.ReadOrderAsync(steps.LastOrder.OrderId);
@@ -121,9 +110,9 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Taker_consumes_multiple_makers_in_deterministic_order()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 2), "bdd-09-first");
-        await steps.WhenSendAsync(new(Seller, "SELL", 950, 3), "bdd-09-second");
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 5), "bdd-09-taker");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 2));
+        await steps.WhenSendAsync(new(Seller, "SELL", 950, 3));
+        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 5));
         steps.LastOrder!.Trades.Select(t => t.Quantity).Should().ContainInOrder(2, 3);
         (await steps.ReadTradesAsync()).Items.Should().HaveCount(2);
         foreach (var trade in steps.LastOrder.Trades)
@@ -134,8 +123,8 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
     public async Task Same_user_can_buy_and_sell_against_its_own_order()
     {
         var steps = await GivenAsync();
-        await steps.WhenSendAsync(new(Buyer, "SELL", 900, 4), "bdd-10-maker");
-        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 4), "bdd-10-taker");
+        await steps.WhenSendAsync(new(Buyer, "SELL", 900, 4));
+        await steps.WhenSendAsync(new(Buyer, "BUY", 900, 4));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         steps.LastOrder!.Trades.Should().ContainSingle();
         (await steps.ReadLedgerCountForTradeAsync(steps.LastOrder.Trades[0].TradeId)).Should().Be(4);
@@ -147,9 +136,9 @@ public sealed class OrderBookFunctionalTests(ApiCollectionFixture fixture)
         var steps = await GivenAsync();
         var buyerBefore = await steps.ReadWalletAsync(Buyer);
         var sellerBefore = await steps.ReadWalletAsync(Seller);
-        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10), "bdd-11-maker");
+        await steps.WhenSendAsync(new(Seller, "SELL", 900, 10));
         var makerOrderId = steps.LastOrder!.OrderId;
-        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10), "bdd-11-taker");
+        await steps.WhenSendAsync(new(Buyer, "BUY", 1_000, 10));
         steps.LastResponse!.StatusCode.Should().Be(HttpStatusCode.Created);
         steps.LastOrder!.Status.Should().Be("FILLED");
         var trade = steps.LastOrder!.Trades.Should().ContainSingle().Which;

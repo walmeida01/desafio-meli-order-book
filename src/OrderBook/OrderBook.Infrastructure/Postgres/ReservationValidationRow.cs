@@ -1,2 +1,3 @@
 namespace OrderBook.Infrastructure.Postgres;
+
 internal sealed class ReservationValidationRow { public Guid ReservationId { get; init; } public Guid OrderId { get; init; } public Guid UserId { get; init; } public string Side { get; init; } = ""; public string Asset { get; init; } = ""; public long OriginalAmount { get; init; } public long RemainingAmount { get; init; } public string Status { get; init; } = ""; public Guid OrderUserId { get; init; } public string OrderSide { get; init; } = ""; public long Price { get; init; } public long OrderRemaining { get; init; } }

@@ -224,25 +224,25 @@ Saga, Outbox, Kafka, settlement assíncrono e cancelamento.
 ### U07 — Idempotência de comandos
 
 #### Objetivo
-Tornar retries e crash após commit seguros e determinísticos.
+Persistir o resultado de cada submissão junto de seus efeitos financeiros.
 
 #### Dependências
 U05, U06.
 
 #### Escopo
-Canonicalização do payload, hash, chave `(userId, Idempotency-Key)`, registro de status/body, replay 200, novo comando 201 e conflito 409 para hash diferente, tudo na mesma transação.
+Canonicalização do payload, hash, chave interna por submissão e registro de status/body, tudo na mesma transação. A API gera uma nova chave UUID para cada chamada.
 
 #### Arquivos/Projetos afetados
 `src/OrderBook/OrderBook.Application/Modules/Orders/SubmitOrder/Idempotency/`; `src/OrderBook/OrderBook.Infrastructure/Postgres/Idempotency/`; testes.
 
 #### Entregáveis
-Porta/adapters de idempotência, canonicalizer, integração com `OrderResult` persistido e caminho de replay antes do matching. O registro, a Order e os efeitos devem compartilhar a transação do comando.
+Porta/adapters para o registro interno, canonicalizer e integração com `OrderResult` persistido. O registro, a Order e os efeitos devem compartilhar a transação do comando.
 
 #### Testes obrigatórios
-Mesmo payload, payload semanticamente equivalente conforme canonicalização, hash divergente, concorrência da mesma chave, crash simulado pós-commit, replay de rejeição, contagem de linhas/efeitos antes e depois do replay e constraint de chave primária.
+Chave interna única, canonicalização, persistência de aceite e rejeição, concorrência, crash simulado pós-commit e constraint de chave primária.
 
 #### Critérios de conclusão
-INV-C07 passa sob corrida; retry nunca cria Order/Trade/reserva adicional e retorna status/body original; hash divergente nunca executa mutation; replay não depende de reexecutar matching.
+INV-C07 passa sob corrida; cada submissão persiste uma única Order/Trade/reserva e seu resultado; a chave interna não é exposta pela API.
 
 #### Fora de escopo
 Idempotência de GET, mensagens duráveis e deduplicação distribuída.
@@ -334,7 +334,7 @@ Publicar a API externa exatamente conforme SDD, sem regra financeira nos endpoin
 U09, U10.
 
 #### Escopo
-Controllers tradicionais `ControllerBase` e contratos versionados em `/api/v1`: `POST /api/v1/orders`, `GET /api/v1/order-book`, `GET /api/v1/trades`, `GET /api/v1/orders/{id}`, `GET /api/v1/wallets/{userId}`, `/api/v1/health`, `/api/v1/ready`, DTOs, validação, correlation ID, OpenAPI e mapeamento 201/200/400/404/409/429/503 com `Idempotency-Key` e `Retry-After`. `/metrics` permanece sem versionamento.
+Controllers tradicionais `ControllerBase` e contratos versionados em `/api/v1`: `POST /api/v1/orders`, `GET /api/v1/order-book`, `GET /api/v1/trades`, `GET /api/v1/orders/{id}`, `GET /api/v1/wallets/{userId}`, `/api/v1/health`, `/api/v1/ready`, DTOs, validação, correlation ID, OpenAPI e mapeamento 201/400/404/409/429/503 com `Retry-After`. `/metrics` permanece sem versionamento.
 
 #### Arquivos/Projetos afetados
 `src/OrderBook/OrderBook.Api/Controllers/`; `OrderBook.Contracts/`; testes de contrato/integrados.
@@ -343,7 +343,7 @@ Controllers tradicionais `ControllerBase` e contratos versionados em `/api/v1`: 
 Controllers por slice, error envelope com código estável/correlation, serialização do `OrderResult` persistido e documentação OpenAPI. `Program` permanece fora das slices e concentra composição, DI e pipeline.
 
 #### Testes obrigatórios
-WebApplicationFactory/integração para payload inválido, BUY/SELL, replay, conflito de chave, saldo insuficiente persistido, 429, 503, queries, cursor/limit válido e inválido, health/readiness e headers `Idempotency-Key`, `Retry-After` e correlation.
+WebApplicationFactory/integração para payload inválido, BUY/SELL, submissões repetidas distintas, saldo insuficiente persistido, 429, 503, queries, cursor/limit válido e inválido, health/readiness e headers `Retry-After` e correlation.
 
 #### Critérios de conclusão
 Contratos de API do SDD passam sem acesso direto a repositórios; endpoints somente transportam, validam e delegam aos handlers; nenhum status é escolhido apenas por conveniência do endpoint.
@@ -386,7 +386,7 @@ Provar as invariantes e os casos críticos sob carga concorrente e falhas contro
 U06, U07, U08, U09, U12.
 
 #### Escopo
-Testes de mesmo usuário, múltiplos writers HTTP, mesma idempotency key, ordering, deadlock/serialization retry, banco indisponível, crash antes/depois commit, restart/rebuild, divergência, shutdown, self-trade e conservação.
+Testes de mesmo usuário, múltiplos writers HTTP, ordering, deadlock/serialization retry, banco indisponível, crash antes/depois commit, restart/rebuild, divergência, shutdown, self-trade e conservação.
 
 Como parte pequena e funcional da unidade, incluir uma suíte BDD contra a API real no projeto separado `tests/OrderBook.FunctionalTests`. Os cenários serão mantidos em Gherkin em português como documentação e terão execução efetiva por testes xUnit equivalentes, usando `WebApplicationFactory`, `HttpClient` e PostgreSQL Testcontainers. Reqnroll é opcional e somente poderá ser usado se os arquivos `.feature` forem executáveis, com geração e descoberta dos testes confirmadas no gate; SpecFlow não deve ser adicionado nem combinado com Reqnroll. A suíte não cria uma nova arquitetura nem substitui as suítes especializadas.
 
@@ -401,8 +401,6 @@ Como parte pequena e funcional da unidade, incluir uma suíte BDD contra a API r
    - **BDD-01:** reserva de uma ordem BUY;
    - **BDD-02:** reserva de uma ordem SELL;
    - **BDD-03:** saldo insuficiente: HTTP 409, `Order=REJECTED` persistida e ausência de `Reservation`, `Trade` e `Ledger`;
-   - **BDD-04:** replay com a mesma tupla `(userId, Idempotency-Key)`: primeiro HTTP 201, replay HTTP 200, mesmo `orderId` e nenhuma duplicação;
-   - **BDD-05:** mesma chave com payload diferente: HTTP 409;
    - **BDD-06:** BUY/SELL compatíveis: existência de `Trade` e preço igual ao da maker;
    - **BDD-07:** prioridade FIFO price-time;
    - **BDD-08:** partial fill;

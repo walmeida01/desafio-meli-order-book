@@ -1,2 +1,3 @@
 namespace OrderBook.Infrastructure.Postgres;
+
 internal sealed class TradeValidationRow { public Guid TradeId { get; init; } public Guid TakerOrderId { get; init; } public Guid MakerOrderId { get; init; } public Guid BuyerUserId { get; init; } public Guid SellerUserId { get; init; } public long Quantity { get; init; } public long Price { get; init; } public long AcceptedSequence { get; init; } public int FillOrdinal { get; init; } }

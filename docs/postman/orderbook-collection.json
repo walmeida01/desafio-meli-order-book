@@ -1,167 +1,135 @@
 {
   "info": {
-    "name": "Meli Order Book V1",
-    "description": "Collection for the versioned Order Book API and Prometheus metrics endpoint.",
+    "name": "Meli Order Book V1 - Fluxo de Compra e Venda",
+    "description": "Execute em ordem, com banco seedado limpo. A compra abre e bloqueia BRL; a venda compativel executa a compra e credita o vendedor.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "userIdBuy", "value": "00000000-0000-0000-0000-000000000001" },
-    { "key": "userIdSell", "value": "00000000-0000-0000-0000-000000000002" },
-    { "key": "orderId", "value": "" },
-    { "key": "buyKey", "value": "demo-buy-001" },
-    { "key": "sellKey", "value": "demo-sell-001" },
-    { "key": "cursor", "value": "" }
+    { "key": "userIdComprador", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "userIdVendedor", "value": "00000000-0000-0000-0000-000000000002" },
+    { "key": "orderIdCompra", "value": "" },
+    { "key": "orderIdVenda", "value": "" },
+    { "key": "tradeId", "value": "" }
   ],
   "item": [
     {
-      "name": "01 - Health",
+      "name": "00 - Verificar API",
       "item": [
         {
-          "name": "Liveness",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/health" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"] } }]
-        },
-        {
-          "name": "Readiness",
+          "name": "Aplicacao esta pronta",
           "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/ready" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 503 while starting', function () { pm.expect([200, 503]).to.include(pm.response.code); });"] } }]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200 - API pronta', function () { pm.response.to.have.status(200); });"] } }]
         }
       ]
     },
     {
-      "name": "02 - Orders",
+      "name": "01 - Compra de Vibranium",
       "item": [
         {
-          "name": "Create BUY",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1000,\n  \"quantity\": 10\n}" },
-            "url": "{{baseUrl}}/api/v1/orders"
-          },
+          "name": "Saldo inicial do comprador",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdComprador}}" },
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Status is 201 or 200 replay', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+            "pm.test('Status 200 - carteira encontrada', function () { pm.response.to.have.status(200); });",
             "const body = pm.response.json();",
-            "if (body.orderId) pm.collectionVariables.set('orderId', body.orderId);",
-            "pm.test('Response has orderId', function () { pm.expect(body.orderId).to.be.a('string'); });"
+            "pm.test('Saldo inicial do comprador', function () { pm.expect(body.brlAvailable).to.eql(100000000); pm.expect(body.brlLocked).to.eql(0); pm.expect(body.vibraniumAvailable).to.eql(100000); pm.expect(body.vibraniumLocked).to.eql(0); });"
           ] } }]
         },
         {
-          "name": "Replay BUY",
+          "name": "Enviar ordem de compra de 1 Vibranium por R$ 1.500,00",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1000,\n  \"quantity\": 10\n}" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdComprador}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 150000,\n  \"quantity\": 1\n}" },
             "url": "{{baseUrl}}/api/v1/orders"
           },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Replay returns 200', function () { pm.response.to.have.status(200); });"] } }]
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 - ordem criada', function () { pm.response.to.have.status(201); });",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('orderIdCompra', body.orderId);",
+            "pm.test('Compra aguarda venda compativel', function () { pm.expect(body.status).to.eql('OPEN'); pm.expect(body.executedQuantity).to.eql(0); pm.expect(body.remainingQuantity).to.eql(1); });"
+          ] } }]
         },
         {
-          "name": "Idempotency conflict",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{buyKey}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdBuy}}\",\n  \"side\": \"BUY\",\n  \"priceBrlCents\": 1001,\n  \"quantity\": 10\n}" },
-            "url": "{{baseUrl}}/api/v1/orders"
-          },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Conflict returns 409', function () { pm.response.to.have.status(409); });"] } }]
+          "name": "Processamento da ordem de compra",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/orders/{{orderIdCompra}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200 - compra processada e aberta', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('OPEN'); });"] } }]
         },
         {
-          "name": "Create SELL",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "{{sellKey}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdSell}}\",\n  \"side\": \"SELL\",\n  \"priceBrlCents\": 900,\n  \"quantity\": 10\n}" },
-            "url": "{{baseUrl}}/api/v1/orders"
-          },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 201 or 200 replay', function () { pm.expect([200, 201]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "Invalid order payload",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "invalid-payload-{{$timestamp}}" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"not-a-guid\",\n  \"side\": \"INVALID\",\n  \"priceBrlCents\": 0,\n  \"quantity\": 0\n}" },
-            "url": "{{baseUrl}}/api/v1/orders"
-          },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid payload returns 400', function () { pm.response.to.have.status(400); });"] } }]
-        },
-        {
-          "name": "Get order by ID",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/orders/{{orderId}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
-        }
-      ]
-    },
-    {
-      "name": "03 - Queries",
-      "item": [
-        {
-          "name": "BUY wallet",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdBuy}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "SELL wallet",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdSell}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "Order book",
+          "name": "Livro de ofertas mostra a compra aberta",
           "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/order-book" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 503', function () { pm.expect([200, 503]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "Trades first page",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?limit=100" },
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Status is 200 or 503', function () { pm.expect([200, 503]).to.include(pm.response.code); });",
-            "if (pm.response.code === 200) { const body = pm.response.json(); if (body.nextCursor) pm.collectionVariables.set('cursor', body.nextCursor); }"
+            "pm.test('Status 200 - livro consultado', function () { pm.response.to.have.status(200); });",
+            "pm.test('Compra esta no livro', function () { pm.expect(pm.response.json().some(function (order) { return order.orderId === pm.collectionVariables.get('orderIdCompra') && order.side === 'BUY' && order.priceBrlCents === 150000 && order.remainingQuantity === 1; })).to.be.true; });"
           ] } }]
         },
         {
-          "name": "Trades next page",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?cursor={{cursor}}&limit=1" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 200, 400 or 503', function () { pm.expect([200, 400, 503]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "Invalid cursor",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?cursor=not-a-base64-cursor&limit=1" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid cursor returns 400 or 503', function () { pm.expect([400, 503]).to.include(pm.response.code); });"] } }]
-        },
-        {
-          "name": "Invalid limit",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?limit=0" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid limit returns 400 or 503', function () { pm.expect([400, 503]).to.include(pm.response.code); });"] } }]
+          "name": "Saldo do comprador apos enviar a compra",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdComprador}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 - carteira encontrada', function () { pm.response.to.have.status(200); });",
+            "const body = pm.response.json();",
+            "pm.test('R$ 1.500,00 estao bloqueados', function () { pm.expect(body.brlAvailable).to.eql(99850000); pm.expect(body.brlLocked).to.eql(150000); });"
+          ] } }]
         }
       ]
     },
     {
-      "name": "04 - Observability",
+      "name": "02 - Venda de Vibranium",
       "item": [
         {
-          "name": "Prometheus metrics",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/metrics" },
+          "name": "Saldo inicial do vendedor",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdVendedor}}" },
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Metrics endpoint returns 200', function () { pm.response.to.have.status(200); });",
-            "const body = pm.response.text();",
-            "['orders_received_total', 'orderbook_queue_depth', 'orderbook_queue_rejected_total', 'orders_processed_total', 'trades_executed_total', 'matching_duration_seconds', 'database_batch_flush_duration_seconds', 'database_batch_size'].forEach(function (metric) { pm.test(metric + ' is exposed', function () { pm.expect(body).to.include(metric); }); });"
+            "pm.test('Status 200 - carteira encontrada', function () { pm.response.to.have.status(200); });",
+            "const body = pm.response.json();",
+            "pm.test('Saldo inicial do vendedor', function () { pm.expect(body.brlAvailable).to.eql(100000000); pm.expect(body.brlLocked).to.eql(0); pm.expect(body.vibraniumAvailable).to.eql(100000); pm.expect(body.vibraniumLocked).to.eql(0); });"
+          ] } }]
+        },
+        {
+          "name": "Enviar ordem de venda de 1 Vibranium por R$ 1.500,00",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userIdVendedor}}\",\n  \"side\": \"SELL\",\n  \"priceBrlCents\": 150000,\n  \"quantity\": 1\n}" },
+            "url": "{{baseUrl}}/api/v1/orders"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 - ordem criada', function () { pm.response.to.have.status(201); });",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('orderIdVenda', body.orderId);",
+            "if (body.trades && body.trades.length === 1) pm.collectionVariables.set('tradeId', body.trades[0].tradeId);",
+            "pm.test('Venda executa a compra aberta', function () { pm.expect(body.status).to.eql('FILLED'); pm.expect(body.executedQuantity).to.eql(1); pm.expect(body.remainingQuantity).to.eql(0); });"
+          ] } }]
+        },
+        {
+          "name": "Processamento da ordem de venda",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/orders/{{orderIdVenda}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200 - venda processada e executada', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('FILLED'); });"] } }]
+        },
+        {
+          "name": "Livro de ofertas nao mostra ordens executadas",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/order-book" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 - livro consultado', function () { pm.response.to.have.status(200); });",
+            "pm.test('Compra e venda executadas sairam do livro', function () { const orders = pm.response.json(); pm.expect(orders.some(function (order) { return order.orderId === pm.collectionVariables.get('orderIdCompra') || order.orderId === pm.collectionVariables.get('orderIdVenda'); })).to.be.false; });"
+          ] } }]
+        },
+        {
+          "name": "Historico de negocios mostra a venda realizada",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/trades?limit=50" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 - historico consultado', function () { pm.response.to.have.status(200); });",
+            "pm.test('Negocio de 1 Vibranium por R$ 1.500,00 existe', function () { pm.expect(pm.response.json().items.some(function (trade) { return trade.tradeId === pm.collectionVariables.get('tradeId') && trade.quantity === 1 && trade.priceBrlCents === 150000; })).to.be.true; });"
+          ] } }]
+        },
+        {
+          "name": "Saldo do vendedor apos a venda",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/wallets/{{userIdVendedor}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 - carteira encontrada', function () { pm.response.to.have.status(200); });",
+            "const body = pm.response.json();",
+            "pm.test('Vendedor recebeu R$ 1.500,00', function () { pm.expect(body.brlAvailable).to.eql(100150000); pm.expect(body.brlLocked).to.eql(0); pm.expect(body.vibraniumAvailable).to.eql(99999); pm.expect(body.vibraniumLocked).to.eql(0); });"
           ] } }]
         }
       ]

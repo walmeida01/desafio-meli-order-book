@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OrderBook.Application.Modules.Orders.SubmitOrder;
 using System.Diagnostics;
 
 namespace OrderBook.Infrastructure.Postgres;
@@ -21,6 +22,16 @@ public sealed class OrderCommandWorker(PostgresOrderSubmission submission, ILogg
                     activity = activitySource.StartActivity("orderbook.command");
                     using var commandCancellation = CancellationTokenSource.CreateLinkedTokenSource(submission.Queue.ProcessingCancellation);
                     await submission.ProcessAsync(command, commandCancellation.Token);
+                }
+                catch (SubmissionUnavailableException exception) when (submission.Queue.ProcessingCancellation.IsCancellationRequested)
+                {
+                    command.Completion.TrySetException(exception);
+                    break;
+                }
+                catch (OperationCanceledException) when (submission.Queue.ProcessingCancellation.IsCancellationRequested)
+                {
+                    command.Completion.TrySetException(new SubmissionUnavailableException("Writer ownership was lost."));
+                    break;
                 }
                 catch (Exception exception)
                 {

@@ -18,13 +18,12 @@ public sealed class OrderApiSteps(ApiCollectionFixture fixture)
 
     public Task GivenCleanScenarioAsync() => fixture.ResetAsync();
 
-    public async Task WhenSendAsync(OrderRequest request, string key)
+    public async Task WhenSendAsync(OrderRequest request)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/orders")
         {
             Content = JsonContent.Create(request, options: JsonOptions)
         };
-        message.Headers.Add("Idempotency-Key", key);
         LastResponse = await fixture.Client.SendAsync(message, TestContext.Current.CancellationToken);
         LastOrder = await TryReadOrderAsync(LastResponse);
     }

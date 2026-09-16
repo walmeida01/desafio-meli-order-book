@@ -1,5 +1,8 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Npgsql;
+using OrderBook.Infrastructure.Postgres;
 using OrderBook.IntegrationTests.Fixtures;
 using Xunit;
 
@@ -41,6 +44,19 @@ public sealed class PostgresRealTests(PostgresFixture fixture) : IClassFixture<P
         var secondResult = await LockAsync(second, CancellationToken);
         firstResult.Should().BeTrue();
         secondResult.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Writer_ownership_checks_share_its_dedicated_connection_serially()
+    {
+        var settings = Options.Create(new PostgresConnectionSettings { ConnectionString = fixture.ConnectionString });
+        await using var ownership = new PostgresWriterOwnership(new PostgresConnectionFactory(settings), NullLogger<PostgresWriterOwnership>.Instance, 7_310_002);
+
+        (await ownership.AcquireAsync(CancellationToken)).Should().BeTrue();
+
+        var checks = Enumerable.Range(0, 100).Select(_ => ownership.CheckAsync(CancellationToken));
+        (await Task.WhenAll(checks)).Should().OnlyContain(result => result);
+        ownership.IsHeld.Should().BeTrue();
     }
 
     private async Task ApplySchemaAsync()

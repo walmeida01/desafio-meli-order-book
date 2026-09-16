@@ -10,6 +10,16 @@ const durationInSeconds = (value, fallback) => {
 const seconds = (value) => `${Math.max(0, Math.ceil(value))}s`;
 
 export function configuration() {
+  const defaultUserIds = [
+    '00000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000002',
+  ];
+  const configuredUserIds = (__ENV.USER_IDS || '').split(',').map((value) => value.trim()).filter(Boolean);
+  const userIds = configuredUserIds.length > 0 ? configuredUserIds : defaultUserIds;
+  const userPoolSize = Number(__ENV.USER_POOL_SIZE || userIds.length);
+  if (!Number.isInteger(userPoolSize) || userPoolSize < 1 || userPoolSize > userIds.length) {
+    throw new Error(`USER_POOL_SIZE must be an integer between 1 and ${userIds.length}; configure USER_IDS for a larger seeded pool`);
+  }
   return {
     baseUrl: (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/$/, ''),
     rate: Number(__ENV.RATE || 10),
@@ -20,7 +30,8 @@ export function configuration() {
     cooldown: __ENV.COOLDOWN || '10s',
     drainTimeout: __ENV.DRAIN_TIMEOUT || '30s',
     metricsInterval: __ENV.METRICS_INTERVAL || '1s',
-    userPoolSize: Number(__ENV.USER_POOL_SIZE || 1000),
+    userPoolSize,
+    userIds: userIds.slice(0, userPoolSize),
     quantity: Number(__ENV.QUANTITY || 1),
     price: Number(__ENV.PRICE_BRL_CENTS || 100),
     buyRatio: Number(__ENV.BUY_RATIO !== undefined ? __ENV.BUY_RATIO : 0.5),
@@ -30,6 +41,8 @@ export function configuration() {
     readyTimeout: __ENV.READY_TIMEOUT || '60s',
     burstMultiplier: Number(__ENV.BURST_MULTIPLIER || 2),
     seed: Number(__ENV.SEED || 17),
+    metricsRetries: Number(__ENV.METRICS_RETRIES || 2),
+    metricsRetryDelay: Number(__ENV.METRICS_RETRY_DELAY || 0.1),
   };
 }
 

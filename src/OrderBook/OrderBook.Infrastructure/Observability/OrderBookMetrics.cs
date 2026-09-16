@@ -28,6 +28,14 @@ public sealed class OrderBookMetrics : IDisposable
         MatchingDuration = meter.CreateHistogram<double>("matching_duration_seconds", "s", "Matching duration");
         DatabaseBatchFlushDuration = meter.CreateHistogram<double>("database_batch_flush_duration_seconds", "s", "Individual PostgreSQL transaction duration");
         DatabaseBatchSize = meter.CreateHistogram<double>("database_batch_size", "value", "One transaction per command");
+
+        // Publish zero-valued counters so Prometheus exposes every normative
+        // counter before the first order reaches the runtime.
+        OrdersReceived.Add(0, new KeyValuePair<string, object?>("side", "BUY"));
+        OrdersReceived.Add(0, new KeyValuePair<string, object?>("side", "SELL"));
+        QueueRejected.Add(0);
+        OrdersProcessed.Add(0, new KeyValuePair<string, object?>("status", "accepted"));
+        TradesExecuted.Add(0);
     }
 
     public void Dispose() => meter.Dispose();

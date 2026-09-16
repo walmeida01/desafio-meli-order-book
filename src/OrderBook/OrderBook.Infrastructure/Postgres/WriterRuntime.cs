@@ -6,7 +6,7 @@ using OrderBook.Infrastructure.Observability;
 
 namespace OrderBook.Infrastructure.Postgres;
 
-public sealed class WriterRuntime(MigrationRunner migrations, PostgresWriterOwnership ownership, OrderBookRecovery recovery, global::OrderBook.Domain.Modules.Matching.OrderBook book, RuntimeReadiness readiness, AdmissionState admission, PostgresOrderSubmission submission, ILogger<WriterRuntime> logger) : BackgroundService
+public sealed class WriterRuntime(MigrationRunner migrations, PostgresWriterOwnership ownership, OrderBookRecovery recovery, global::OrderBook.Domain.Modules.Matching.OrderBook book, RuntimeReadiness readiness, AdmissionState admission, PostgresOrderSubmission submission, IHostApplicationLifetime applicationLifetime, ILogger<WriterRuntime> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -25,7 +25,8 @@ public sealed class WriterRuntime(MigrationRunner migrations, PostgresWriterOwne
                     readiness.MarkNotReady();
                     admission.Stop();
                     submission.StopProcessing();
-                    logger.LogCritical("PostgreSQL writer ownership was lost; mutations are stopped.");
+                    logger.LogCritical("PostgreSQL writer ownership was lost; readiness is false, mutations are stopped, and controlled process shutdown was requested.");
+                    applicationLifetime.StopApplication();
                     return;
                 }
             }

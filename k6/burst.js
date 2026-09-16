@@ -43,6 +43,7 @@ export function observe() {
 export function teardown(data) {
   const after = collectPrometheus(config, 'after');
   if (!drainRecorded) drainSeconds.add(durationInSeconds(config.drainTimeout), { scenario: 'burst', outcome: 'timeout', http_status_class: '2xx', side: 'none', role: 'drain', phase: 'drain' });
+  check(after, { 'all normative metrics collected after load': (m) => m && m.valid });
   if (after && after.valid) {
     console.log(JSON.stringify({
       scenario: 'burst',

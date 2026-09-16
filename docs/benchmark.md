@@ -22,11 +22,14 @@ configuração. Uma declaração exige um relatório reproduzível preenchido em
 
 `BASE_URL` (http://localhost:8080), `RATE` (10), `PRE_ALLOCATED_VUS` (20),
 `MAX_VUS` (100), `DURATION` (30s), `WARMUP` (10s), `COOLDOWN` (10s),
-`DRAIN_TIMEOUT` (30s), `METRICS_INTERVAL` (1s), `USER_POOL_SIZE` (1000),
+`DRAIN_TIMEOUT` (30s), `METRICS_INTERVAL` (1s), `USER_POOL_SIZE` (2),
 `QUANTITY` (1), `PRICE_BRL_CENTS` (100), `BUY_RATIO` (0.5), `REPLAY_RATIO`
 (0.05), `CONFLICT_RATIO` (0.01), `HTTP_TIMEOUT` (5s), `READY_TIMEOUT` (60s),
-`BURST_MULTIPLIER` (2) e `SEED` (17). O pool precisa corresponder às wallets
-seedadas no ambiente; para o seed mínimo local, use `USER_POOL_SIZE=2`.
+`BURST_MULTIPLIER` (2), `SEED` (17), `USER_IDS` (lista separada por vírgulas),
+`METRICS_RETRIES` (2) e `METRICS_RETRY_DELAY` (0.1s). O workload seleciona
+somente os primeiros `USER_POOL_SIZE` IDs configurados e nunca inventa UUIDs.
+Para o seed mínimo local, o default é `USER_POOL_SIZE=2`; para um pool maior,
+informe em `USER_IDS` a lista completa de usuários seedados.
 
 O workload usa IDs/chaves determinísticos derivados de `SEED`, VU e iteração,
 com um identificador novo por execução. Ele mistura BUY/SELL, makers/takers,
@@ -50,6 +53,32 @@ obrigatório.
 As métricas K6 separam requests, orders e trades e usam p50/p95/p99 por
 categoria. Tags são somente `scenario`, `outcome`, `http_status_class`,
 `side`, `role` e `phase`; IDs e chaves nunca são tags.
+
+No dashboard Grafana, **Total de Requisicoes de Ordem** usa
+`increase(orders_received_total{job="orderbook-api"}[$__range])`. Ele mede
+somente chamadas de submissao de ordem e nao inclui `/metrics`, health, queries
+ou Swagger. Para comparar com um resultado K6, selecione no Grafana o mesmo
+intervalo da execucao salva no resumo JSON.
+
+Cada alvo `make k6-*` grava automaticamente o resumo estruturado do K6 em
+`benchmarks/results/`, com nome composto pelo cenário e timestamp UTC. Por
+exemplo:
+
+```bash
+make k6-sustained RATE=500 DURATION=30s
+# benchmarks/results/sustained-20260916T220000Z.json
+```
+
+Para escolher o nome do arquivo sem sobrescrever os demais resultados, informe
+somente o nome em `RESULT_FILE`:
+
+```bash
+make k6-burst RESULT_FILE=burst-r500.json RATE=500
+```
+
+Os arquivos JSON de resultado não são versionados. Eles contêm o resumo final
+do K6, incluindo contadores, tendências, percentis e `dropped_iterations`;
+registre os valores relevantes no relatório de benchmark.
 
 ## Interpretação e limitações
 

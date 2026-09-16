@@ -4,10 +4,6 @@ function hash(seed, value) {
   return (result >>> 0) / 4294967296;
 }
 
-function userId(index) {
-  return `00000000-0000-0000-0000-${String((index % 999999999999999) + 1).padStart(12, '0')}`;
-}
-
 export function orderWorkload(config, executionId, iteration, vu, scenario) {
   const index = vu * 1000000 + iteration;
   const random = hash(config.seed, `${executionId}:${index}`);
@@ -19,10 +15,11 @@ export function orderWorkload(config, executionId, iteration, vu, scenario) {
   const pair = Math.floor(index / 2);
   const keyBase = `${executionId}-${scenario}-${pair}`;
   const idempotencyKey = isReplay || isConflict ? keyBase : `${keyBase}-${index}`;
+  const selectedUserId = config.userIds[index % config.userPoolSize];
   return {
-    userId: userId(index % Math.max(1, config.userPoolSize)),
+    userId: selectedUserId,
     side, role, idempotencyKey, isReplay, isConflict,
-    body: { userId: userId(index % Math.max(1, config.userPoolSize)), side, priceBrlCents: pairPrice + (isConflict ? 1 : 0), quantity: config.quantity },
+    body: { userId: selectedUserId, side, priceBrlCents: pairPrice + (isConflict ? 1 : 0), quantity: config.quantity },
   };
 }
 

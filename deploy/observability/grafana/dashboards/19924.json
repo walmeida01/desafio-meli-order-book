@@ -652,6 +652,7 @@
         "type": "prometheus",
         "uid": "orderbook-prometheus"
       },
+      "description": "Total de chamadas POST /api/v1/orders no intervalo selecionado. Nao inclui scrapes de metricas, consultas ou outras rotas HTTP.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -707,14 +708,14 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(ceil(increase(http_server_request_duration_seconds_count{job=~\"$job\", instance=~\"$instance\"}[$__range])))",
+          "expr": "sum(increase(orders_received_total{job=\"orderbook-api\"}[$__range]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Total Requests",
+      "title": "Total de Requisicoes de Ordem",
       "type": "stat"
     },
     {

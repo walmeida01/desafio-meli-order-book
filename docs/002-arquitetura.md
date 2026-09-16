@@ -16,7 +16,7 @@ RF01–RF12 e RNF01–RNF08 são atendidos pelas slices e gates do plano. A refe
 
 Hipóteses explícitas: usuários e saldos vêm de seed/fixture; BRL é `long` em centavos; quantidade e preço são inteiros positivos; há um processo ativo e um livro na V1; PostgreSQL é dependência obrigatória para readiness e mutations. Não tratar hipóteses como requisitos de produto.
 
-Invariantes: `available` e `locked` nunca negativos; reserva financia uma única ordem; `remaining` não excede `original`; acceptedSequence de ordem aceita é única, monotônica e nunca reutilizada; cada efeito financeiro é aplicado uma vez; `(userId, Idempotency-Key)` não cria ordens duplicadas; BRL e Vibranium são conservados; o livro só expõe estado committed; divergência de rebuild mantém readiness falsa.
+Invariantes: `available` e `locked` nunca negativos; reserva financia uma única ordem; `remaining` não excede `original`; acceptedSequence de ordem aceita é única, monotônica e nunca reutilizada; cada efeito financeiro é aplicado uma vez; cada submissão recebe uma chave interna exclusiva; BRL e Vibranium são conservados; o livro só expõe estado committed; divergência de rebuild mantém readiness falsa.
 
 Não há open question bloqueante para a V1. Frações, taxas, cancelamento, autenticação, multi-instrumento, particionamento e mensageria exigem requisitos/ADRs próprios.
 
@@ -47,7 +47,7 @@ Self-trade é permitido e tratado como trade normal; não há filtro por `userId
 
 ## 6. Admissão, Channel e shutdown
 
-HTTP exige `Idempotency-Key`, valida payload e tenta `TryWrite` em `Channel<T>` bounded, `SingleReader=true`, múltiplos writers, capacidade default **4096**. `TryWrite=false` retorna **429** com `Retry-After`; nenhum comando escrito é descartado. Readiness falsa retorna 503 e impede novas mutations. O timeout default do comando/transação é **2 segundos**.
+HTTP valida payload, gera uma chave UUID interna para cada submissão e tenta `TryWrite` em `Channel<T>` bounded, `SingleReader=true`, múltiplos writers, capacidade default **4096**. Cada `POST` é uma nova submissão. `TryWrite=false` retorna **429** com `Retry-After`; nenhum comando escrito é descartado. Readiness falsa retorna 503 e impede novas mutations. O timeout default do comando/transação é **2 segundos**.
 
 O reader único verifica idempotência, obtém sequência/estado e executa matching/settlement síncronos. Um comando e todos os seus fills pertencem a uma única transação PostgreSQL individual. `database_batch_size` é sempre registrado como 1 e `database_batch_flush_duration_seconds` mede essa transação; não há batching de aplicação nem group commit.
 
@@ -80,7 +80,7 @@ Foreign keys, unique constraints e checks protegem referências, duplicate trade
 
 ## 9. Contratos API e internos
 
-`POST /api/v1/orders` recebe `{userId, side, priceBrlCents, quantity}` e header `Idempotency-Key`. Novo resultado 201; replay idêntico 200; payload diferente para a mesma tupla retorna 409; inválido 400; saldo/limite 409; Channel cheio 429 com `Retry-After`; não-ready 503. Resposta persistida contém `orderId`, status, original/executed/remaining, `acceptedSequence` quando aceita e lista de `{tradeId, quantity, priceBrlCents}`.
+`POST /api/v1/orders` recebe `{userId, side, priceBrlCents, quantity}`. Cada chamada é uma nova submissão e recebe uma chave interna. Novo resultado retorna 201; payload inválido 400; saldo/limite 409; Channel cheio 429 com `Retry-After`; não-ready 503. Resposta persistida contém `orderId`, status, original/executed/remaining, `acceptedSequence` quando aceita e lista de `{tradeId, quantity, priceBrlCents}`.
 
 Queries: `GET /api/v1/order-book`, `GET /api/v1/trades` (ordem determinística e paginação), `GET /api/v1/orders/{id}`, `GET /api/v1/wallets/{userId}`. São read-only e podem observar apenas estado committed; não há autenticação V1. `/api/v1/health` e `/api/v1/ready` são endpoints técnicos.
 
@@ -110,7 +110,7 @@ Performance deve medir throughput de requests/orders/trades, p50/p95/p99, error 
 
 Concorrência é serializada no livro; writers HTTP são paralelos; SQL locks são ordenados. READ COMMITTED + locks + constraints e idempotência evitam double spending e retries duplicados. Resiliência é dada por rollback, restart/rebuild, readiness e retry limitado.
 
-Logs JSON estruturados incluem correlation ID, request/Idempotency hash redigido, order/trade/sequence, status, duração, queue e erro sem segredos/saldos completos. O Meter é `MeliOrderBook.Metrics`, com OpenTelemetry Metrics, exporter Prometheus e dashboards Grafana 19924/19925. As métricas normativas são exatamente `orders_received_total`, `orderbook_queue_depth`, `orderbook_queue_rejected_total`, `orders_processed_total` com tag `status`, `trades_executed_total`, `matching_duration_seconds`, `database_batch_flush_duration_seconds` e `database_batch_size`; esta última registra sempre 1. Traces cobrem HTTP→Channel→command→DB. `/metrics` não é versionado; `/api/v1/health` é liveness; `/api/v1/ready` exige advisory lock, PostgreSQL/schema, recovery concluído e nenhuma divergência.
+Logs JSON estruturados incluem correlation ID, request/Idempotency hash redigido, order/trade/sequence, status, duração, queue e erro sem segredos/saldos completos. O Meter é `MeliOrderBook.Metrics`, com OpenTelemetry Metrics, exporter Prometheus e dashboards Grafana 19924/19925, além do dashboard de negócio local. As métricas normativas são exatamente `orders_received_total` com tag `side` em `BUY|SELL`, `orderbook_queue_depth`, `orderbook_queue_rejected_total`, `orders_processed_total` com tag `status`, `trades_executed_total`, `matching_duration_seconds`, `database_batch_flush_duration_seconds` e `database_batch_size`; esta última registra sempre 1. Traces cobrem HTTP→Channel→command→DB. `/metrics` não é versionado; `/api/v1/health` é liveness; `/api/v1/ready` exige advisory lock, PostgreSQL/schema, recovery concluído e nenhuma divergência.
 
 Validar ranges/tamanho/paginação, parametrizar SQL e limitar cardinalidade de labels. TLS, autenticação e autorização permanecem fora da V1; não registrar chaves ou dados sensíveis.
 

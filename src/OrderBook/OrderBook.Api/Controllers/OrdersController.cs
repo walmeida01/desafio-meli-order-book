@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 using Npgsql;
 using OrderBook.Application.Modules.Orders.SubmitOrder;
 using OrderBook.Application.Modules.Orders.SubmitOrder.Idempotency;
@@ -14,23 +14,27 @@ namespace OrderBook.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/orders")]
+[Produces("application/json")]
 public sealed class OrdersController(ISubmitOrder submission, IReadiness readiness, AdmissionState admission, OrderBookMetrics metrics, ILogger<OrdersController> logger) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Create([FromHeader(Name = "Idempotency-Key")] string? idempotencyKey, [FromBody] JsonElement body, CancellationToken cancellationToken)
+    [EndpointSummary("Cria uma ordem de compra ou venda")]
+    [EndpointDescription("Reserva saldo, executa o matching contra ordens compativeis e devolve o resultado da ordem.")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Create([FromBody] SubmitOrderRequest payload, CancellationToken cancellationToken)
     {
         if (!readiness.IsReady || !admission.Accepting) return StatusCode(StatusCodes.Status503ServiceUnavailable);
-        if (idempotencyKey is null || !Request.Headers.TryGetValue("Idempotency-Key", out var values) || values.Count != 1)
-            return BadRequest(new { code = "INVALID_IDEMPOTENCY_KEY" });
+        var idempotencyKey = Guid.NewGuid().ToString("N");
 
-        SubmitOrderRequest payload;
         SubmitOrderCommand command;
         try
         {
-            var names = body.ValueKind == JsonValueKind.Object ? body.EnumerateObject().Select(property => property.Name).ToArray() : [];
-            var expected = new[] { "userId", "side", "priceBrlCents", "quantity" };
-            if (body.ValueKind != JsonValueKind.Object || names.Length != expected.Length || names.Except(expected).Any() || expected.Except(names).Any()) throw new JsonException();
-            payload = body.Deserialize<SubmitOrderRequest>(new JsonSerializerOptions(JsonSerializerDefaults.Web)) ?? throw new JsonException();
             var side = Enum.Parse<Side>(payload.Side, true);
             var user = UserId.Create(payload.UserId);
             var price = BrlCents.Create(payload.PriceBrlCents);
@@ -38,13 +42,13 @@ public sealed class OrdersController(ISubmitOrder submission, IReadiness readine
             var canonical = new CanonicalOrderPayload(payload.UserId, side.ToString(), payload.PriceBrlCents, payload.Quantity);
             command = new(Guid.NewGuid(), user, side, price, quantity, IdempotencyKey.Create(idempotencyKey), CanonicalPayload.Hash(canonical));
         }
-        catch (Exception exception) when (exception is JsonException or FormatException or ArgumentException or DomainException)
+        catch (Exception exception) when (exception is FormatException or ArgumentException or DomainException)
         {
             logger.LogWarning("Order payload failed domain validation: {Error}", SensitiveDataRedactor.Redact(exception.Message));
             return BadRequest(new { code = "INVALID_PAYLOAD" });
         }
 
-        metrics.OrdersReceived.Add(1);
+        metrics.OrdersReceived.Add(1, new KeyValuePair<string, object?>("side", command.Side.ToString()));
         if (!submission.TrySubmit(command, out var result))
         {
             metrics.QueueRejected.Add(1);
@@ -65,6 +69,11 @@ public sealed class OrdersController(ISubmitOrder submission, IReadiness readine
     }
 
     [HttpGet("{id:guid}")]
+    [EndpointSummary("Consulta uma ordem")]
+    [EndpointDescription("Retorna o status, quantidades executadas e negocios associados a uma ordem.")]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Get(Guid id, [FromServices] IOrderQueries queries, CancellationToken cancellationToken) =>
         !readiness.IsReady ? StatusCode(503) : (await queries.GetOrderAsync(id, cancellationToken)) is { } result ? Ok(result) : NotFound();
 }
