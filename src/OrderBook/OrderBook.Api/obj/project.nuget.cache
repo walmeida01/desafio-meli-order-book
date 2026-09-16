@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "ONur608n7nY=",
+  "dgSpecHash": "yjOz5I/79Jg=",
   "success": true,
   "projectFilePath": "/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Api/OrderBook.Api.csproj",
   "expectedPackageFiles": [
     "/home/will/.nuget/packages/dapper/2.1.66/dapper.2.1.66.nupkg.sha512",
+    "/home/will/.nuget/packages/microsoft.aspnetcore.openapi/10.0.12/microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
+    "/home/will/.nuget/packages/microsoft.openapi/2.12.0/microsoft.openapi.2.12.0.nupkg.sha512",
     "/home/will/.nuget/packages/npgsql/10.0.0/npgsql.10.0.0.nupkg.sha512",
     "/home/will/.nuget/packages/opentelemetry/1.15.0/opentelemetry.1.15.0.nupkg.sha512",
     "/home/will/.nuget/packages/opentelemetry.api/1.15.3/opentelemetry.api.1.15.3.nupkg.sha512",
@@ -15,7 +17,8 @@
     "/home/will/.nuget/packages/opentelemetry.instrumentation.aspnetcore/1.15.0/opentelemetry.instrumentation.aspnetcore.1.15.0.nupkg.sha512",
     "/home/will/.nuget/packages/opentelemetry.instrumentation.http/1.15.0/opentelemetry.instrumentation.http.1.15.0.nupkg.sha512",
     "/home/will/.nuget/packages/opentelemetry.instrumentation.process/1.15.1-beta.1/opentelemetry.instrumentation.process.1.15.1-beta.1.nupkg.sha512",
-    "/home/will/.nuget/packages/opentelemetry.instrumentation.runtime/1.15.0/opentelemetry.instrumentation.runtime.1.15.0.nupkg.sha512"
+    "/home/will/.nuget/packages/opentelemetry.instrumentation.runtime/1.15.0/opentelemetry.instrumentation.runtime.1.15.0.nupkg.sha512",
+    "/home/will/.nuget/packages/swashbuckle.aspnetcore.swaggerui/7.3.1/swashbuckle.aspnetcore.swaggerui.7.3.1.nupkg.sha512"
   ],
   "logs": []
 }

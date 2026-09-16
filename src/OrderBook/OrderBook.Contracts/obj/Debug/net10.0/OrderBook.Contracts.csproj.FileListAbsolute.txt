@@ -9,3 +9,4 @@
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Contracts/obj/Debug/net10.0/refint/OrderBook.Contracts.dll
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Contracts/obj/Debug/net10.0/OrderBook.Contracts.pdb
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Contracts/obj/Debug/net10.0/ref/OrderBook.Contracts.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Contracts/obj/Debug/net10.0/OrderBook.Contracts.sourcelink.json

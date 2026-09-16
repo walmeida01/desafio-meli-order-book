@@ -15,6 +15,41 @@
           }
         }
       },
+      "Microsoft.AspNetCore.OpenApi/10.0.12": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.12.0, 3.0.0)"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ],
+        "build": {
+          "build/Microsoft.AspNetCore.OpenApi.targets": {}
+        }
+      },
+      "Microsoft.OpenApi/2.12.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Microsoft.OpenApi.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.OpenApi.dll": {
+            "related": ".pdb;.xml"
+          }
+        }
+      },
       "Npgsql/10.0.0": {
         "type": "package",
         "compile": {
@@ -191,6 +226,22 @@
           }
         }
       },
+      "Swashbuckle.AspNetCore.SwaggerUI/7.3.1": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
       "OrderBook.Application/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -271,6 +322,42 @@
         "lib/netstandard2.0/Dapper.dll",
         "lib/netstandard2.0/Dapper.xml",
         "readme.md"
+      ]
+    },
+    "Microsoft.AspNetCore.OpenApi/10.0.12": {
+      "sha512": "7RnQ/UKn+kK3JDLmTpW+vVqNErWthGPAVAy1aIiBzv4ucQ6g9NFvOJUuT0PHcpvcJxGVxctMxj6t+NESWMrgHQ==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.openapi/10.0.12",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "analyzers/dotnet/cs/Microsoft.AspNetCore.OpenApi.SourceGenerators.dll",
+        "build/Microsoft.AspNetCore.OpenApi.targets",
+        "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll",
+        "lib/net10.0/Microsoft.AspNetCore.OpenApi.xml",
+        "microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
+        "microsoft.aspnetcore.openapi.nuspec"
+      ]
+    },
+    "Microsoft.OpenApi/2.12.0": {
+      "sha512": "0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ==",
+      "type": "package",
+      "path": "microsoft.openapi/2.12.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net8.0/Microsoft.OpenApi.dll",
+        "lib/net8.0/Microsoft.OpenApi.pdb",
+        "lib/net8.0/Microsoft.OpenApi.xml",
+        "lib/netstandard2.0/Microsoft.OpenApi.dll",
+        "lib/netstandard2.0/Microsoft.OpenApi.pdb",
+        "lib/netstandard2.0/Microsoft.OpenApi.xml",
+        "microsoft.openapi.2.12.0.nupkg.sha512",
+        "microsoft.openapi.nuspec"
       ]
     },
     "Npgsql/10.0.0": {
@@ -556,6 +643,30 @@
         "opentelemetry.instrumentation.runtime.nuspec"
       ]
     },
+    "Swashbuckle.AspNetCore.SwaggerUI/7.3.1": {
+      "sha512": "hs6C+lmNEzipOA1WPQpIaGvvoXjUbnoevbv6l7o9ZQE8SNF8ggjOmK6NB6cYdMcEvk0uBeKl4Qq/BnRt5MFVqg==",
+      "type": "package",
+      "path": "swashbuckle.aspnetcore.swaggerui/7.3.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net6.0/Swashbuckle.AspNetCore.SwaggerUI.dll",
+        "lib/net6.0/Swashbuckle.AspNetCore.SwaggerUI.pdb",
+        "lib/net6.0/Swashbuckle.AspNetCore.SwaggerUI.xml",
+        "lib/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll",
+        "lib/net8.0/Swashbuckle.AspNetCore.SwaggerUI.pdb",
+        "lib/net8.0/Swashbuckle.AspNetCore.SwaggerUI.xml",
+        "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll",
+        "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.pdb",
+        "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.xml",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerUI.dll",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerUI.pdb",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.SwaggerUI.xml",
+        "package-readme.md",
+        "swashbuckle.aspnetcore.swaggerui.7.3.1.nupkg.sha512",
+        "swashbuckle.aspnetcore.swaggerui.nuspec"
+      ]
+    },
     "OrderBook.Application/1.0.0": {
       "type": "project",
       "path": "../OrderBook.Application/OrderBook.Application.csproj",
@@ -579,6 +690,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "Microsoft.AspNetCore.OpenApi >= 10.0.12",
       "OpenTelemetry >= 1.15.0",
       "OpenTelemetry.Exporter.OpenTelemetryProtocol >= 1.15.0",
       "OpenTelemetry.Exporter.Prometheus.AspNetCore >= 1.15.0-beta.1",
@@ -588,7 +700,8 @@
       "OpenTelemetry.Instrumentation.Runtime >= 1.15.0",
       "OrderBook.Application >= 1.0.0",
       "OrderBook.Contracts >= 1.0.0",
-      "OrderBook.Infrastructure >= 1.0.0"
+      "OrderBook.Infrastructure >= 1.0.0",
+      "Swashbuckle.AspNetCore.SwaggerUI >= 7.3.1"
     ]
   },
   "packageFolders": {
@@ -650,6 +763,11 @@
       "net10.0": {
         "targetAlias": "net10.0",
         "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": {
+            "target": "Package",
+            "version": "[10.0.12, )",
+            "versionCentrallyManaged": true
+          },
           "OpenTelemetry": {
             "target": "Package",
             "version": "[1.15.0, )",
@@ -684,12 +802,18 @@
             "target": "Package",
             "version": "[1.15.0, )",
             "versionCentrallyManaged": true
+          },
+          "Swashbuckle.AspNetCore.SwaggerUI": {
+            "target": "Package",
+            "version": "[7.3.1, )",
+            "versionCentrallyManaged": true
           }
         },
         "centralPackageVersions": {
           "Dapper": "2.1.66",
           "FluentAssertions": "8.8.0",
           "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+          "Microsoft.AspNetCore.OpenApi": "10.0.12",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
           "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -702,6 +826,7 @@
           "OpenTelemetry.Instrumentation.Http": "1.15.0",
           "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
           "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+          "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
           "Testcontainers.PostgreSql": "4.8.1",
           "xunit.runner.visualstudio": "3.1.5",
           "xunit.v3": "3.2.2"

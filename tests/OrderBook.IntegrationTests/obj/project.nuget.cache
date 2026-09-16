@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "JykZt8+NMRg=",
+  "dgSpecHash": "dFGdcEowKxo=",
   "success": true,
   "projectFilePath": "/home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/OrderBook.IntegrationTests.csproj",
   "expectedPackageFiles": [
@@ -11,6 +11,7 @@
     "/home/will/.nuget/packages/fluentassertions/8.8.0/fluentassertions.8.8.0.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.applicationinsights/2.23.0/microsoft.applicationinsights.2.23.0.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.aspnetcore.mvc.testing/10.0.12/microsoft.aspnetcore.mvc.testing.10.0.12.nupkg.sha512",
+    "/home/will/.nuget/packages/microsoft.aspnetcore.openapi/10.0.12/microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.aspnetcore.testhost/10.0.12/microsoft.aspnetcore.testhost.10.0.12.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.codecoverage/18.0.1/microsoft.codecoverage.18.0.1.nupkg.sha512",
@@ -43,6 +44,7 @@
     "/home/will/.nuget/packages/microsoft.extensions.options.configurationextensions/10.0.12/microsoft.extensions.options.configurationextensions.10.0.12.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.extensions.primitives/10.0.12/microsoft.extensions.primitives.10.0.12.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.net.test.sdk/18.0.1/microsoft.net.test.sdk.18.0.1.nupkg.sha512",
+    "/home/will/.nuget/packages/microsoft.openapi/2.12.0/microsoft.openapi.2.12.0.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.testing.extensions.telemetry/1.9.1/microsoft.testing.extensions.telemetry.1.9.1.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.testing.extensions.trxreport.abstractions/1.9.1/microsoft.testing.extensions.trxreport.abstractions.1.9.1.nupkg.sha512",
     "/home/will/.nuget/packages/microsoft.testing.platform/1.9.1/microsoft.testing.platform.1.9.1.nupkg.sha512",
@@ -64,6 +66,7 @@
     "/home/will/.nuget/packages/opentelemetry.instrumentation.runtime/1.15.0/opentelemetry.instrumentation.runtime.1.15.0.nupkg.sha512",
     "/home/will/.nuget/packages/sharpziplib/1.4.2/sharpziplib.1.4.2.nupkg.sha512",
     "/home/will/.nuget/packages/ssh.net/2024.2.0/ssh.net.2024.2.0.nupkg.sha512",
+    "/home/will/.nuget/packages/swashbuckle.aspnetcore.swaggerui/7.3.1/swashbuckle.aspnetcore.swaggerui.7.3.1.nupkg.sha512",
     "/home/will/.nuget/packages/system.diagnostics.eventlog/10.0.12/system.diagnostics.eventlog.10.0.12.nupkg.sha512",
     "/home/will/.nuget/packages/testcontainers/4.8.1/testcontainers.4.8.1.nupkg.sha512",
     "/home/will/.nuget/packages/testcontainers.postgresql/4.8.1/testcontainers.postgresql.4.8.1.nupkg.sha512",

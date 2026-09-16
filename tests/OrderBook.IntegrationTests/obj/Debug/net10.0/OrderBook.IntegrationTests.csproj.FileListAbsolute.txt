@@ -498,3 +498,7 @@
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/OpenTelemetry.Instrumentation.Http.dll
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/OpenTelemetry.Instrumentation.Process.dll
+/home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/obj/Debug/net10.0/OrderBook.IntegrationTests.sourcelink.json
+/home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/Microsoft.AspNetCore.OpenApi.dll
+/home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/Microsoft.OpenApi.dll
+/home/will/projects/meli-desafio-order-book/tests/OrderBook.IntegrationTests/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll

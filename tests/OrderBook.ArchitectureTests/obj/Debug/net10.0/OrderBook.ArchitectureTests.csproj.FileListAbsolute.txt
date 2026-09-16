@@ -151,3 +151,4 @@
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.ArchitectureTests/obj/Debug/net10.0/OrderBook.ArchitectureTests.pdb
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.ArchitectureTests/obj/Debug/net10.0/OrderBook.ArchitectureTests.genruntimeconfig.cache
 /home/will/projects/meli-desafio-order-book/tests/OrderBook.ArchitectureTests/obj/Debug/net10.0/ref/OrderBook.ArchitectureTests.dll
+/home/will/projects/meli-desafio-order-book/tests/OrderBook.ArchitectureTests/obj/Debug/net10.0/OrderBook.ArchitectureTests.sourcelink.json

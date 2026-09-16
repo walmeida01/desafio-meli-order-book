@@ -60,6 +60,11 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[10.0.12, )",
+              "versionCentrallyManaged": true
+            },
             "OpenTelemetry": {
               "target": "Package",
               "version": "[1.15.0, )",
@@ -94,12 +99,18 @@
               "target": "Package",
               "version": "[1.15.0, )",
               "versionCentrallyManaged": true
+            },
+            "Swashbuckle.AspNetCore.SwaggerUI": {
+              "target": "Package",
+              "version": "[7.3.1, )",
+              "versionCentrallyManaged": true
             }
           },
           "centralPackageVersions": {
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -112,6 +123,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"
@@ -609,6 +621,7 @@
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -621,6 +634,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"
@@ -968,6 +982,7 @@
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -980,6 +995,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"
@@ -1327,6 +1343,7 @@
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -1339,6 +1356,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"
@@ -1742,6 +1760,7 @@
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -1754,6 +1773,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"
@@ -2291,6 +2311,7 @@
             "Dapper": "2.1.66",
             "FluentAssertions": "8.8.0",
             "Microsoft.AspNetCore.Mvc.Testing": "10.0.12",
+            "Microsoft.AspNetCore.OpenApi": "10.0.12",
             "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
             "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
             "Microsoft.NET.Test.Sdk": "18.0.1",
@@ -2303,6 +2324,7 @@
             "OpenTelemetry.Instrumentation.Http": "1.15.0",
             "OpenTelemetry.Instrumentation.Process": "1.15.1-beta.1",
             "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
+            "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1",
             "Testcontainers.PostgreSql": "4.8.1",
             "xunit.runner.visualstudio": "3.1.5",
             "xunit.v3": "3.2.2"

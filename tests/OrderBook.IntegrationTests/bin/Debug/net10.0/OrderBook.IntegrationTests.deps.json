@@ -449,6 +449,20 @@
           "lib/net10.0/Microsoft.AspNetCore.Mvc.Testing.dll": {}
         }
       },
+      "Microsoft.AspNetCore.OpenApi/10.0.12": {
+        "dependencies": {
+          "Microsoft.OpenApi": "2.12.0"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
+            "assemblyVersion": "10.0.12.0",
+            "fileVersion": "10.0.1226.42308"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {}
+        }
+      },
       "Microsoft.AspNetCore.TestHost/10.0.12": {
         "runtime": {
           "lib/net10.0/Microsoft.AspNetCore.TestHost.dll": {
@@ -497,6 +511,17 @@
         "dependencies": {
           "Microsoft.CodeCoverage": "18.0.1",
           "Microsoft.TestPlatform.TestHost": "18.0.1"
+        }
+      },
+      "Microsoft.OpenApi/2.12.0": {
+        "runtime": {
+          "lib/net8.0/Microsoft.OpenApi.dll": {
+            "assemblyVersion": "2.12.0.0",
+            "fileVersion": "2.12.0.0"
+          }
+        },
+        "compile": {
+          "lib/net8.0/Microsoft.OpenApi.dll": {}
         }
       },
       "Microsoft.Testing.Extensions.Telemetry/1.9.1": {
@@ -1127,6 +1152,17 @@
           "lib/net8.0/Renci.SshNet.dll": {}
         }
       },
+      "Swashbuckle.AspNetCore.SwaggerUI/7.3.1": {
+        "runtime": {
+          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {
+            "assemblyVersion": "7.3.1.0",
+            "fileVersion": "7.3.1.1111"
+          }
+        },
+        "compile": {
+          "lib/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll": {}
+        }
+      },
       "System.Diagnostics.EventLog/10.0.12": {
         "runtimeTargets": {
           "runtimes/win/lib/net10.0/System.Diagnostics.EventLog.Messages.dll": {
@@ -1271,6 +1307,7 @@
       },
       "OrderBook.Api/1.0.0": {
         "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "10.0.12",
           "OpenTelemetry": "1.15.0",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "1.15.0",
           "OpenTelemetry.Exporter.Prometheus.AspNetCore": "1.15.0-beta.1",
@@ -1280,7 +1317,8 @@
           "OpenTelemetry.Instrumentation.Runtime": "1.15.0",
           "OrderBook.Application": "1.0.0",
           "OrderBook.Contracts": "1.0.0",
-          "OrderBook.Infrastructure": "1.0.0"
+          "OrderBook.Infrastructure": "1.0.0",
+          "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1"
         },
         "runtime": {
           "OrderBook.Api.dll": {
@@ -3486,6 +3524,13 @@
       "path": "microsoft.aspnetcore.mvc.testing/10.0.12",
       "hashPath": "microsoft.aspnetcore.mvc.testing.10.0.12.nupkg.sha512"
     },
+    "Microsoft.AspNetCore.OpenApi/10.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7RnQ/UKn+kK3JDLmTpW+vVqNErWthGPAVAy1aIiBzv4ucQ6g9NFvOJUuT0PHcpvcJxGVxctMxj6t+NESWMrgHQ==",
+      "path": "microsoft.aspnetcore.openapi/10.0.12",
+      "hashPath": "microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512"
+    },
     "Microsoft.AspNetCore.TestHost/10.0.12": {
       "type": "package",
       "serviceable": true,
@@ -3520,6 +3565,13 @@
       "sha512": "sha512-WNpu6vI2rA0pXY4r7NKxCN16XRWl5uHu6qjuyVLoDo6oYEggIQefrMjkRuibQHm/NslIUNCcKftvoWAN80MSAg==",
       "path": "microsoft.net.test.sdk/18.0.1",
       "hashPath": "microsoft.net.test.sdk.18.0.1.nupkg.sha512"
+    },
+    "Microsoft.OpenApi/2.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ==",
+      "path": "microsoft.openapi/2.12.0",
+      "hashPath": "microsoft.openapi.2.12.0.nupkg.sha512"
     },
     "Microsoft.Testing.Extensions.Telemetry/1.9.1": {
       "type": "package",
@@ -3660,6 +3712,13 @@
       "sha512": "sha512-9r+4UF2P51lTztpd+H7SJywk7WgmlWB//Cm2o96c6uGVZU5r58ys2/cD9pCgTk0zCdSkfflWL1WtqQ9I4IVO9Q==",
       "path": "ssh.net/2024.2.0",
       "hashPath": "ssh.net.2024.2.0.nupkg.sha512"
+    },
+    "Swashbuckle.AspNetCore.SwaggerUI/7.3.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hs6C+lmNEzipOA1WPQpIaGvvoXjUbnoevbv6l7o9ZQE8SNF8ggjOmK6NB6cYdMcEvk0uBeKl4Qq/BnRt5MFVqg==",
+      "path": "swashbuckle.aspnetcore.swaggerui/7.3.1",
+      "hashPath": "swashbuckle.aspnetcore.swaggerui.7.3.1.nupkg.sha512"
     },
     "System.Diagnostics.EventLog/10.0.12": {
       "type": "package",

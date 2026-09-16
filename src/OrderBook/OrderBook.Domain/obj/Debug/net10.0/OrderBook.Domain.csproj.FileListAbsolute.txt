@@ -9,3 +9,4 @@
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/refint/OrderBook.Domain.dll
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.pdb
 /home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/ref/OrderBook.Domain.dll
+/home/will/projects/meli-desafio-order-book/src/OrderBook/OrderBook.Domain/obj/Debug/net10.0/OrderBook.Domain.sourcelink.json
